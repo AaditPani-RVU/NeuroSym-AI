@@ -1,0 +1,12 @@
+%% Render this mermaid in GitHub or generate PNG/SVG with Mermaid CLI
+flowchart LR
+  A[User Prompt] --> B{LLM Layer}
+  B -->|Primary| B1[Gemini API]
+  B -->|Fallback| B2[Ollama Local]
+  B1 --> C[Raw Output]
+  B2 --> C[Raw Output]
+  C --> D[Validation Engine]
+  D -->|Rules: Regex/Schema/Python/Z3| E{Violations?}
+  E -- Yes --> F[Repair Loop<br/>Critique + Retry]
+  F --> C
+  E -- No --> G[Safe, Compliant Output ✅]

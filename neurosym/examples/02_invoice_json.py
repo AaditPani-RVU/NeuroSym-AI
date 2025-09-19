@@ -1,9 +1,12 @@
-# examples/02_invoice_json.py
+# neurosym/examples/02_invoice_json.py  (fixed)
 from neurosym.llm.gemini import GeminiLLM
 from neurosym.llm.ollama import OllamaLLM
 from neurosym.llm.fallback import FallbackLLM
 from neurosym.engine.guard import Guard
 from neurosym.rules.schema_rule import SchemaRule
+from neurosym.rules.policies import policy_pii_basic
+rules = policy_pii_basic()
+
 
 invoice_schema = {
   "type": "object",
@@ -22,10 +25,10 @@ invoice_schema = {
 
 primary = GeminiLLM(
     model="gemini-1.5-flash",
+    # Ask Gemini to produce JSON, but DO NOT pass our JSON Schema here
     response_mime_type="application/json",
-    response_schema=invoice_schema,
 )
-secondary = OllamaLLM(model="llama3:8b")
+secondary = OllamaLLM(model="phi3:mini")  # your fallback choice
 llm = FallbackLLM(primary, secondary)
 
 rules = [SchemaRule("invoice-schema", schema=invoice_schema)]
@@ -37,7 +40,12 @@ Items:
 - Widget B, 1 unit x 24.0
 Total due: 49.0 USD
 """
-prompt = f"Extract an invoice in JSON that matches the schema from this text:\n{doc}\nReturn only JSON."
+prompt = (
+  "Extract an invoice **as a single JSON object** with fields: "
+  "invoice_id (string), items (array of {name, price:number}), total (number).\n"
+  "Return **ONLY** JSON, no prose.\n\n"
+  f"Source:\n{doc}"
+)
 
 res = guard.generate(prompt, temperature=0.2)
 print("JSON OUTPUT:\n", res.output)

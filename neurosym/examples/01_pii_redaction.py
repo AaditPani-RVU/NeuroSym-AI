@@ -4,10 +4,14 @@ from neurosym.llm.ollama import OllamaLLM
 from neurosym.llm.fallback import FallbackLLM
 from neurosym.engine.guard import Guard
 from neurosym.rules.regex_rule import RegexRule
+from neurosym.rules.policies import policy_pii_basic
+rules = policy_pii_basic()
+
 
 # export GEMINI_API_KEY before running; optionally run Ollama locally
 primary = GeminiLLM(model="gemini-1.5-flash")
-secondary = OllamaLLM(model="llama3:8b")
+secondary = OllamaLLM(model="phi3:mini")
+
 llm = FallbackLLM(primary, secondary, cooldown_sec=120)
 
 rules = [

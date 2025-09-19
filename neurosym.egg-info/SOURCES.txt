@@ -6,6 +6,7 @@ neurosym/__main__.py
 neurosym.egg-info/PKG-INFO
 neurosym.egg-info/SOURCES.txt
 neurosym.egg-info/dependency_links.txt
+neurosym.egg-info/requires.txt
 neurosym.egg-info/top_level.txt
 neurosym/engine/__init__.py
 neurosym/engine/guard.py

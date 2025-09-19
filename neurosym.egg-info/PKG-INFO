@@ -1,5 +1,39 @@
 Metadata-Version: 2.4
 Name: neurosym
-Version: 0.0.0
+Version: 0.1.0
+Summary: Neuro-symbolic guardrails for LLMs: rules + repair loops + (optional) SMT.
+Author: Aadit Pani
+License-Expression: Apache-2.0
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: jsonschema>=4.21.0
+Requires-Dist: typing-extensions>=4.7.0
+Requires-Dist: google-generativeai>=0.7.2
+Requires-Dist: requests>=2.31.0
+Provides-Extra: z3
+Requires-Dist: z3-solver>=4.12; extra == "z3"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: pytest-cov>=4.1; extra == "dev"
+Requires-Dist: mypy>=1.8; extra == "dev"
+Requires-Dist: ruff>=0.5.0; extra == "dev"
+Requires-Dist: pre-commit>=3.5.0; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Requires-Dist: python-dotenv>=1.0; extra == "dev"
 Dynamic: license-file
+
+# 🧠 neurosym
+
+**Neuro-symbolic guardrails for LLMs** — validate and repair outputs from Gemini, Ollama, or OpenAI using symbolic rules (regex, JSON Schema, Python predicates, SMT/Z3).
+
+---
+
+## 🚀 Quickstart
+
+```bash
+pip install -e ".[dev]"
+export GEMINI_API_KEY="your_key"
+python -m neurosym.examples.01_pii_redaction
+```

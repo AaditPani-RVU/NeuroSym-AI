@@ -1,20 +1,29 @@
 # neurosym/llm/fallback.py
 import time
-from typing import Iterable, Optional
+from collections.abc import Iterable
+
 from .base import LLM
+
 
 class FallbackLLM(LLM):
     """
     Try primary first (Gemini), and fall back to secondary (Ollama) on errors.
     Includes a simple circuit-breaker cooldown after repeated primary failures.
     """
-    def __init__(self, primary: LLM, secondary: LLM, cooldown_sec: float = 60.0, max_primary_errors: int = 3):
+
+    def __init__(
+        self,
+        primary: LLM,
+        secondary: LLM,
+        cooldown_sec: float = 60.0,
+        max_primary_errors: int = 3,
+    ):
         self.primary = primary
         self.secondary = secondary
         self.cooldown_sec = cooldown_sec
         self.max_primary_errors = max_primary_errors
         self._primary_err = 0
-        self._blocked_until: Optional[float] = None
+        self._blocked_until: float | None = None
 
     def _can_use_primary(self) -> bool:
         return self._blocked_until is None or time.time() >= self._blocked_until

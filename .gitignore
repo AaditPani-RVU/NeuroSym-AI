@@ -1,6 +1,25 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
 
-# Local env
+# Builds
+build/
+dist/
+.wheelhouse/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Envs
+.venv/
 .env
+.env.*
+
+# Editors/OS
+.vscode/
+.DS_Store
+Thumbs.db

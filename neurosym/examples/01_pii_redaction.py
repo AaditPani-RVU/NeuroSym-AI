@@ -1,10 +1,11 @@
 # examples/01_pii_redaction.py
+from neurosym.engine.guard import Guard
+from neurosym.llm.fallback import FallbackLLM
 from neurosym.llm.gemini import GeminiLLM
 from neurosym.llm.ollama import OllamaLLM
-from neurosym.llm.fallback import FallbackLLM
-from neurosym.engine.guard import Guard
-from neurosym.rules.regex_rule import RegexRule
 from neurosym.rules.policies import policy_pii_basic
+from neurosym.rules.regex_rule import RegexRule
+
 rules = policy_pii_basic()
 
 

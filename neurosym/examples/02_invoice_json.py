@@ -1,26 +1,33 @@
 # neurosym/examples/02_invoice_json.py  (fixed)
+from neurosym.engine.guard import Guard
+from neurosym.llm.fallback import FallbackLLM
 from neurosym.llm.gemini import GeminiLLM
 from neurosym.llm.ollama import OllamaLLM
-from neurosym.llm.fallback import FallbackLLM
-from neurosym.engine.guard import Guard
-from neurosym.rules.schema_rule import SchemaRule
 from neurosym.rules.policies import policy_pii_basic
+from neurosym.rules.schema_rule import SchemaRule
+
 rules = policy_pii_basic()
 
 
 invoice_schema = {
-  "type": "object",
-  "required": ["invoice_id", "items", "total"],
-  "properties": {
-    "invoice_id": {"type": "string"},
-    "items": {"type": "array", "items": {"type": "object",
-              "required": ["name", "price"],
-              "properties": {
-                  "name": {"type": "string"},
-                  "price": {"type": "number", "minimum": 0}
-              }}}},
-    "total": {"type": "number", "minimum": 0}
-  }
+    "type": "object",
+    "required": ["invoice_id", "items", "total"],
+    "properties": {
+        "invoice_id": {"type": "string"},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["name", "price"],
+                "properties": {
+                    "name": {"type": "string"},
+                    "price": {"type": "number", "minimum": 0},
+                },
+            },
+        },
+    },
+    "total": {"type": "number", "minimum": 0},
+}
 
 
 primary = GeminiLLM(
@@ -41,10 +48,10 @@ Items:
 Total due: 49.0 USD
 """
 prompt = (
-  "Extract an invoice **as a single JSON object** with fields: "
-  "invoice_id (string), items (array of {name, price:number}), total (number).\n"
-  "Return **ONLY** JSON, no prose.\n\n"
-  f"Source:\n{doc}"
+    "Extract an invoice **as a single JSON object** with fields: "
+    "invoice_id (string), items (array of {name, price:number}), total (number).\n"
+    "Return **ONLY** JSON, no prose.\n\n"
+    f"Source:\n{doc}"
 )
 
 res = guard.generate(prompt, temperature=0.2)

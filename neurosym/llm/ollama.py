@@ -1,38 +1,47 @@
 # neurosym/llm/ollama.py
-import os, time, requests, json
-from typing import Iterable, Optional
-from .base import LLM
+from __future__ import annotations
 
-class OllamaLLM(LLM):
-    def __init__(self, model: str = "llama3:8b", host: Optional[str] = None,
-                 timeout: float = 30.0, max_retries: int = 2):
+from typing import Any
+
+import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+
+class OllamaLLM:
+    """
+    Local LLM client for the Ollama runtime.
+    Compatible with Guard's interface (generate(prompt) -> str).
+    """
+
+    def __init__(
+        self,
+        model: str = "phi3:mini",
+        endpoint: str = "http://127.0.0.1:11434",
+        timeout_s: int = 60,
+    ):
         self.model = model
-        self.host = host or os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
-        self.timeout = timeout
-        self.max_retries = max_retries
+        self.endpoint = endpoint.rstrip("/")
+        self.timeout_s = timeout_s
 
-    def _payload(self, prompt: str, **kwargs):
-        temperature = kwargs.pop("temperature", 0.7)
-        return {"model": self.model, "prompt": prompt, "options": {"temperature": temperature}}
-
-    def generate(self, prompt: str, **kwargs) -> str:
-        url = f"{self.host}/api/generate"
-        payload = self._payload(prompt, **kwargs)
-        delay = 1.0
-        for attempt in range(self.max_retries + 1):
-            try:
-                r = requests.post(url, json=payload, timeout=self.timeout, stream=True)
+    # automatic retries on transient failures
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=8)
+    )
+    def generate(self, prompt: str, **gen_kwargs) -> str:
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": gen_kwargs.get("temperature", 0.2),
+                "num_predict": gen_kwargs.get("max_tokens", 512),
+            },
+        }
+        try:
+            with httpx.Client(timeout=self.timeout_s) as client:
+                r = client.post(f"{self.endpoint}/api/generate", json=payload)
                 r.raise_for_status()
-                out = []
-                for line in r.iter_lines():
-                    if not line: continue
-                    obj = json.loads(line.decode("utf-8"))
-                    if "response" in obj: out.append(obj["response"])
-                return "".join(out)
-            except (requests.Timeout, requests.ConnectionError, requests.HTTPError):
-                if attempt >= self.max_retries: raise
-                time.sleep(delay); delay = min(delay * 2, 8.0)
-        raise RuntimeError("Ollama call failed after retries")
-
-    def stream(self, prompt: str, **kwargs) -> Iterable[str]:
-        yield self.generate(prompt, **kwargs)
+                data = r.json()
+                return data.get("response", "").strip()
+        except Exception as e:
+            raise RuntimeError(f"OllamaLLM failed: {e}")

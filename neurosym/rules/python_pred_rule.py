@@ -1,5 +1,8 @@
-from typing import Any, Callable, List
-from .base import Rule, Violation
+from collections.abc import Callable
+from typing import Any
+
+from .base import Violation
+
 
 class PythonPredicateRule:
     def __init__(self, id: str, predicate: Callable[[Any], bool], message: str):
@@ -7,7 +10,7 @@ class PythonPredicateRule:
         self._pred = predicate
         self._msg = message
 
-    def evaluate(self, output: Any) -> List[Violation]:
+    def evaluate(self, output: Any) -> list[Violation]:
         try:
             ok = bool(self._pred(output))
         except Exception as e:

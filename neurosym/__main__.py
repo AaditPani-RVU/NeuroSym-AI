@@ -1,10 +1,12 @@
 # neurosym/__main__.py — run: python -m neurosym check --rule email --text "..."
-import argparse, sys
+import argparse
+
+from neurosym.engine.guard import Guard
+from neurosym.llm.fallback import FallbackLLM
 from neurosym.llm.gemini import GeminiLLM
 from neurosym.llm.ollama import OllamaLLM
-from neurosym.llm.fallback import FallbackLLM
-from neurosym.engine.guard import Guard
 from neurosym.rules.regex_rule import RegexRule
+
 
 def cmd_check(args):
     rules = []
@@ -17,17 +19,21 @@ def cmd_check(args):
     print(res.output)
     print("\nTRACE:\n" + res.report())
 
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="neurosym")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    pc = sub.add_parser("check", help="Generate text then validate/repair with simple rules")
+    pc = sub.add_parser(
+        "check", help="Generate text then validate/repair with simple rules"
+    )
     pc.add_argument("--rule", choices=["email"], default="email")
     pc.add_argument("--text", required=True)
     pc.set_defaults(func=cmd_check)
 
     args = p.parse_args(argv)
     args.func(args)
+
 
 if __name__ == "__main__":
     main()

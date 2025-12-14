@@ -1,23 +1,28 @@
-import json, re
-from typing import Any, Optional
+# neurosym/utils/json_tools.py
+from __future__ import annotations
 
-def safe_json_loads(text: str) -> Optional[Any]:
-    try:
-        return json.loads(text)
-    except Exception:
-        return None
+import json
+from typing import Any
 
-_JSON_BLOCK = re.compile(r"\{.*\}|\[.*\]", re.DOTALL)
 
-def extract_first_json(text: str) -> Optional[Any]:
+def parse_json_maybe(text: Any) -> tuple[Any | None, str | None]:
     """
-    Find and parse the first JSON object/array in a string.
-    Handy when the model adds extra prose around your JSON.
+    Try to parse `text` as JSON if it's a string. If it's already a Python object, return it.
+    Returns (obj, err) where err is None on success or a short error string on failure.
     """
-    m = _JSON_BLOCK.search(text or "")
-    if not m:
-        return None
+    if not isinstance(text, str):
+        return text, None
     try:
-        return json.loads(m.group(0))
-    except Exception:
-        return None
+        return json.loads(text), None
+    except Exception as e:
+        return None, str(e)
+
+
+def to_json_compact(obj: Any) -> str:
+    """Compact JSON (no spaces) for logs or wire transfers."""
+    return json.dumps(obj, separators=(",", ":"), ensure_ascii=False)
+
+
+def to_json_pretty(obj: Any) -> str:
+    """Pretty JSON for human-facing logs/reports."""
+    return json.dumps(obj, indent=2, ensure_ascii=False)

@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "invoice_id": { "type": "string" },
+    "amount": { "type": "number", "minimum": 0 },
+    "currency": { "type": "string" }
+  },
+  "required": ["invoice_id", "amount", "currency"],
+  "additionalProperties": false
+}

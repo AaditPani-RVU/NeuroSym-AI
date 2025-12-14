@@ -59,9 +59,9 @@ dev = [
 neurosym = "neurosym.cli_tui:app"
 
 [project.urls]
-Homepage = "https://github.com/<your-org-or-username>/neurosym-ai"
-Repository = "https://github.com/<your-org-or-username>/neurosym-ai"
-Issues = "https://github.com/<your-org-or-username>/neurosym-ai/issues"
+Homepage = "https://github.com/AaditPani-RVU/NeuroSym-AI"
+Repository = "https://github.com/AaditPani-RVU/NeuroSym-AI"
+Issues = "https://github.com/AaditPani-RVU/NeuroSym-AI/issues"
 
 # -------------------------
 # Setuptools packaging

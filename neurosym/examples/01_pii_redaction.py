@@ -22,7 +22,11 @@ rules = [
 
 guard = Guard(llm=llm, rules=rules, max_retries=2)
 
-prompt = "Write a short bio of Alex (skills: Python, robotics). Do not include any emails or phone numbers."
+prompt = (
+    "Write a short bio of Alex (skills: Python, robotics). "
+    "Do not include any emails or phone numbers."
+)
+
 res = guard.generate(prompt, temperature=0.7)
 
 print("OUTPUT:\n", res.output)

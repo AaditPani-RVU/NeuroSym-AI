@@ -24,9 +24,7 @@ def main():
         MaxLengthRule("fmt.max_len", 2000),
     ]
 
-    guard = Guard(
-        llm=llm, rules=rules, max_retries=2, deny_rule_ids={"safety.no_email"}
-    )
+    guard = Guard(llm=llm, rules=rules, max_retries=2, deny_rule_ids={"safety.no_email"})
 
     user_text = (
         "Summarize this: 'Contact ada@exampleinvoiceservice.com to finalize invoice "
@@ -35,9 +33,7 @@ def main():
 
     # 1) redact INPUT
     red_in = Redactor().apply(user_text)
-    prompt = (
-        f"Summarize the following without revealing PII. Input: '''{red_in.text}'''"
-    )
+    prompt = f"Summarize the following without revealing PII. Input: '''{red_in.text}'''"
 
     # 2) Guarded generation (repairs will try; hard-stop on email rule)
     result = guard.generate(prompt, temperature=0.2, max_tokens=256)

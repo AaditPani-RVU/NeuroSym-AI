@@ -1,4 +1,6 @@
 # neurosym/cli_tui.py
+# ruff: noqa: B008
+
 from __future__ import annotations
 
 import json
@@ -35,9 +37,7 @@ def get_llm(use_ollama: bool, model: str = "phi3:mini"):
 
         return OllamaLLM(model=model)
     except Exception as e:
-        console.print(
-            f"[yellow]Using EchoLLM fallback[/yellow] — Ollama unavailable: {e}"
-        )
+        console.print(f"[yellow]Using EchoLLM fallback[/yellow] — Ollama unavailable: {e}")
         return EchoLLM()
 
 
@@ -78,9 +78,7 @@ def render_violations_detail(attempt) -> Panel | None:
         if v.get("meta"):
             meta_json = json.dumps(v["meta"], ensure_ascii=False, indent=2)
             lines.append(f"[dim]{meta_json}[/dim]")
-    return Panel(
-        "\n".join(lines), title="Last Attempt Violations (detailed)", border_style="red"
-    )
+    return Panel("\n".join(lines), title="Last Attempt Violations (detailed)", border_style="red")
 
 
 def load_schema(path: Path | None) -> dict | None:
@@ -90,36 +88,24 @@ def load_schema(path: Path | None) -> dict | None:
         return json.loads(Path(path).read_text(encoding="utf-8"))
     except Exception as e:
         console.print(f"[red]Failed to read schema:[/red] {e}")
-        raise typer.Exit(2)
+        raise typer.Exit(2) from e
 
 
 # ---- Commands --------------------------------------------------------------
 @app.command(help="One-shot guarded generation (pretty output).")
 def run(
-    task: str = typer.Option(
-        ..., "--task", "-t", help="e.g., 'Summarize' or 'Extract JSON'."
-    ),
+    task: str = typer.Option(..., "--task", "-t", help="e.g., 'Summarize' or 'Extract JSON'."),
     text: str = typer.Option(..., "--text", "-x", help="Input text."),
-    ollama: bool = typer.Option(
-        False, "--ollama", help="Use local Ollama (phi3:mini)."
-    ),
-    retries: int = typer.Option(
-        1, "--retries", "-r", min=0, help="Max repair retries."
-    ),
-    redact: bool = typer.Option(
-        True, "--redact/--no-redact", help="Pre & post PII redaction."
-    ),
-    schema_path: Path | None = typer.Option(
-        None, "--schema", "-s", help="Path to JSON Schema."
-    ),
+    ollama: bool = typer.Option(False, "--ollama", help="Use local Ollama (phi3:mini)."),
+    retries: int = typer.Option(1, "--retries", "-r", min=0, help="Max repair retries."),
+    redact: bool = typer.Option(True, "--redact/--no-redact", help="Pre & post PII redaction."),
+    schema_path: Path | None = typer.Option(None, "--schema", "-s", help="Path to JSON Schema."),
     deny_email_hard: bool = typer.Option(
         True,
         "--deny-email-hard/--no-deny-email-hard",
         help="Stop early if email detected.",
     ),
-    json_out: bool = typer.Option(
-        False, "--json", help="Emit JSON {output, trace} only."
-    ),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON {output, trace} only."),
 ):
     # LLM + rules
     llm = get_llm(ollama)
@@ -158,14 +144,10 @@ def run(
         raise typer.Exit()
 
     # pretty print
-    console.print(
-        Panel(f"[bold]{task}[/bold]", subtitle="NeuroSym-AI", border_style="green")
-    )
+    console.print(Panel(f"[bold]{task}[/bold]", subtitle="NeuroSym-AI", border_style="green"))
     console.print(Panel(out_text, title="Output", border_style="cyan"))
     if red_in_hits or red_out_hits:
-        console.print(
-            f"[dim]Redactions — input: {red_in_hits}, output: {red_out_hits}[/dim]"
-        )
+        console.print(f"[dim]Redactions — input: {red_in_hits}, output: {red_out_hits}[/dim]")
 
     console.print(render_trace_table(result))
     detail = render_violations_detail(result.trace[-1])
@@ -175,21 +157,15 @@ def run(
 
 @app.command(help="Interactive REPL with guardrails.")
 def chat(
-    ollama: bool = typer.Option(
-        False, "--ollama", help="Use local Ollama (phi3:mini)."
-    ),
-    redact: bool = typer.Option(
-        True, "--redact/--no-redact", help="Pre & post PII redaction."
-    ),
+    ollama: bool = typer.Option(False, "--ollama", help="Use local Ollama (phi3:mini)."),
+    redact: bool = typer.Option(True, "--redact/--no-redact", help="Pre & post PII redaction."),
     retries: int = typer.Option(1, "--retries", "-r", min=0),
     schema_path: Path | None = typer.Option(None, "--schema", "-s"),
 ):
     llm = get_llm(ollama)
     schema = load_schema(schema_path)
     rules = build_rules(schema)
-    guard = Guard(
-        llm=llm, rules=rules, max_retries=retries, deny_rule_ids={"safety.no_email"}
-    )
+    guard = Guard(llm=llm, rules=rules, max_retries=retries, deny_rule_ids={"safety.no_email"})
 
     console.print(Panel("NeuroSym-AI Interactive", border_style="green"))
     console.print("[dim]Type 'exit' to quit.[/dim]\n")
@@ -219,9 +195,7 @@ def chat(
 
         console.print(Panel(out_text, title="Output", border_style="cyan"))
         if red_in_hits or red_out_hits:
-            console.print(
-                f"[dim]Redactions — input: {red_in_hits}, output: {red_out_hits}[/dim]"
-            )
+            console.print(f"[dim]Redactions — input: {red_in_hits}, output: {red_out_hits}[/dim]")
         console.print(render_trace_table(res))
         detail = render_violations_detail(res.trace[-1])
         if detail:

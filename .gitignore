@@ -23,3 +23,35 @@ htmlcov/
 .vscode/
 .DS_Store
 Thumbs.db
+*.egg-info/
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+*.whl
+
+# Temporary extraction / debug folders
+temp_*/
+temp_final/
+
+# PyPI / TestPyPI secrets
+TestPyPI-Recovery-Codes-*.txt
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
+# Secrets / tokens
+pypi-*.txt
+TestPyPI-Recovery-Codes-*.txt
+
+# Temporary extraction folder
+temp_final/
+temp_*/

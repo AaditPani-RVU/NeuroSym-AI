@@ -32,9 +32,7 @@ def get_llm():
 
         return OllamaLLM(model="phi3:mini")
     except Exception as e:
-        print(
-            f"[info] Using EchoLLM fallback (Ollama not available or import failed: {e})"
-        )
+        print(f"[info] Using EchoLLM fallback (Ollama not available or import failed: {e})")
         return EchoLLM()
 
 

@@ -48,9 +48,7 @@ class GeminiLLM(LLM):
         model = (
             self._client
             if cfg == self.generation_config
-            else genai.GenerativeModel(
-                model_name=self.model_name, generation_config=cfg
-            )
+            else genai.GenerativeModel(model_name=self.model_name, generation_config=cfg)
         )
 
         delay = 1.0

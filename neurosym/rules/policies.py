@@ -11,9 +11,7 @@ from .base import Violation
 class DenyIfContains:  # implements Rule
     """Violation if the (stringified) output contains any banned substring."""
 
-    def __init__(
-        self, id: str, banned: Iterable[str], case_insensitive: bool = True
-    ) -> None:
+    def __init__(self, id: str, banned: Iterable[str], case_insensitive: bool = True) -> None:
         self.id = id
         self._banned = list(banned)
         self._ci = case_insensitive

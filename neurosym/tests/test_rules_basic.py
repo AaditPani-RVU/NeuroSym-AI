@@ -3,9 +3,7 @@ from neurosym.rules.schema_rule import SchemaRule
 
 
 def test_regex_rule_blocks_email():
-    r = RegexRule(
-        "no-email", r"\b[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}\b", must_not_match=True
-    )
+    r = RegexRule("no-email", r"\b[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}\b", must_not_match=True)
     assert r.evaluate("contact me at a@b.com")
     assert not r.evaluate("no emails here")
 

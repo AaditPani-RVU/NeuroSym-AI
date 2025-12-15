@@ -17,8 +17,6 @@ rules = [
 ]
 
 guard = Guard(llm, rules, max_retries=2)
-res = guard.generate(
-    "Write a short professional bio for Alex. No contacts.", temperature=0.6
-)
+res = guard.generate("Write a short professional bio for Alex. No contacts.", temperature=0.6)
 print("OUTPUT:\n", res.output)
 print("\nTRACE:\n", res.report())

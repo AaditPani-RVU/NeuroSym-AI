@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from neurosym.rules.base import Rule, Violation
+from neurosym.rules.base import Rule, Severity, Violation, severity_gte
 
 
 @runtime_checkable
@@ -117,12 +117,14 @@ class Guard:
         max_retries: int = 2,
         deny_rule_ids: Iterable[str] | None = None,
         enable_offline_repairs: bool = True,
+        deny_above: Severity | None = None,
     ) -> None:
         self.llm = llm
         self.rules = rules
         self.max_retries = max(0, int(max_retries))
         self._deny_rule_ids = set(deny_rule_ids or ())
         self.enable_offline_repairs = enable_offline_repairs
+        self.deny_above = deny_above
 
     # ---------- Internals ----------
 
@@ -146,13 +148,16 @@ class Guard:
         return {
             "rule_id": getattr(v, "rule_id", "unknown_rule"),
             "message": getattr(v, "message", str(v)),
+            "severity": getattr(v, "severity", "medium"),
             "meta": getattr(v, "meta", None),
         }
 
     def _has_hard_deny(self, violations: list[Violation]) -> bool:
-        if not self._deny_rule_ids:
-            return False
-        return any(v.rule_id in self._deny_rule_ids for v in violations)
+        if self._deny_rule_ids and any(v.rule_id in self._deny_rule_ids for v in violations):
+            return True
+        if self.deny_above is not None:
+            return any(severity_gte(v.severity, self.deny_above) for v in violations)
+        return False
 
     # ---------- Offline deterministic repairs ----------
 

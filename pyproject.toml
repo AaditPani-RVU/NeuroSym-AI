@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurosym-ai"
-version = "0.1.2"
+version = "0.2.0"
 description = "Neuro-symbolic guardrails for LLMs: rules + repair loops + (optional) SMT."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -99,7 +99,7 @@ disallow_untyped_defs = true
 
 # Only the library
 files = ["neurosym"]
-exclude = "(^|/)(.venv|dist|build|neurosym/tests|neurosym/examples)/"
+exclude = "(^|/)(.venv|dist|build|neurosym/tests|neurosym/examples|neurosym/agents)/"
 
 [[tool.mypy.overrides]]
 module = [

@@ -2,7 +2,23 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
+
+Severity = Literal["info", "low", "medium", "high", "critical"]
+
+_SEVERITY_ORDER: dict[str, int] = {
+    "info": 0,
+    "low": 1,
+    "medium": 2,
+    "high": 3,
+    "critical": 4,
+}
+
+
+def severity_gte(a: Severity, b: Severity) -> bool:
+    """Return True if severity `a` is >= severity `b`."""
+    return _SEVERITY_ORDER[a] >= _SEVERITY_ORDER[b]
+
 
 # ----------------------------
 # Core data structures
@@ -15,11 +31,13 @@ class Violation:
     A single rule violation produced by a Rule.
     - rule_id: stable identifier for the rule (e.g., "schema.invoice.required")
     - message: human-readable explanation of what failed
+    - severity: how serious the violation is (info < low < medium < high < critical)
     - meta: optional machine-readable context (paths, diffs, indices, etc.)
     """
 
     rule_id: str
     message: str
+    severity: Severity = "medium"
     meta: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -27,9 +45,14 @@ class Violation:
         return asdict(self)
 
     @staticmethod
-    def simple(rule_id: str, message: str, **meta: Any) -> Violation:
+    def simple(
+        rule_id: str,
+        message: str,
+        severity: Severity = "medium",
+        **meta: Any,
+    ) -> Violation:
         """Convenience constructor."""
-        return Violation(rule_id=rule_id, message=message, meta=meta or None)
+        return Violation(rule_id=rule_id, message=message, severity=severity, meta=meta or None)
 
 
 class Rule(Protocol):
@@ -103,8 +126,8 @@ class BaseRule:
         raise NotImplementedError
 
     # ---- helpers for subclasses ----
-    def fail(self, message: str, **meta: Any) -> Violation:
-        return Violation(rule_id=self.id, message=message, meta=meta or None)
+    def fail(self, message: str, severity: Severity = "medium", **meta: Any) -> Violation:
+        return Violation(rule_id=self.id, message=message, severity=severity, meta=meta or None)
 
     def ok(self) -> list[Violation]:
         return []

@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square" />
-  <img src="https://img.shields.io/pypi/v/neurosym-ai?style=flat-square&color=orange" />
+  <img src="https://img.shields.io/badge/pypi-v0.2.0-orange?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
   <img src="https://img.shields.io/badge/mypy-strict-success?style=flat-square" />
   <img src="https://img.shields.io/badge/lint-ruff-blueviolet?style=flat-square" />

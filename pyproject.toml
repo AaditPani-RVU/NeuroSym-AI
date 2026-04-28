@@ -28,6 +28,8 @@ dependencies = [
   "tenacity>=9.0",
   "rich>=13.7",
   "typer>=0.12",
+  "pydantic>=2.0",
+  "PyYAML>=6.0",
   # typing-extensions only needed <3.11
   "typing-extensions>=4.7.0; python_version < \"3.11\"",
 ]

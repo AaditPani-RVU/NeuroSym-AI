@@ -23,105 +23,7 @@
 ## Architecture
 
 <p align="center">
-<svg viewBox="0 0 680 520" xmlns="http://www.w3.org/2000/svg" width="680" height="520" style="font-family: 'Segoe UI', Arial, sans-serif; background: #0d1117; border-radius: 12px;">
-
-  <!-- Background -->
-  <rect width="680" height="520" rx="12" fill="#0d1117"/>
-
-  <!-- Title -->
-  <text x="340" y="36" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="700" letter-spacing="1">NeuroSym-AI Pipeline</text>
-
-  <!-- ── Node definitions ── -->
-  <!-- Each node: rounded rect + label + sublabel -->
-
-  <!-- 1. Voice / Text Input -->
-  <rect x="220" y="55" width="240" height="52" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
-  <text x="340" y="77" text-anchor="middle" fill="#58a6ff" font-size="13" font-weight="600">Voice / Text Input</text>
-  <text x="340" y="96" text-anchor="middle" fill="#8b949e" font-size="10.5">Raw transcriptions · untrusted strings · tool output</text>
-
-  <!-- Arrow 1→2 -->
-  <line x1="340" y1="107" x2="340" y2="127" stroke="#30363d" stroke-width="1.5" marker-end="url(#arr)"/>
-
-  <!-- 2. Prompt Injection Detection -->
-  <rect x="175" y="127" width="330" height="52" rx="8" fill="#161b22" stroke="#f78166" stroke-width="1.5"/>
-  <text x="340" y="149" text-anchor="middle" fill="#f78166" font-size="13" font-weight="600">Prompt Injection Detection</text>
-  <text x="340" y="168" text-anchor="middle" fill="#8b949e" font-size="10.5">PromptInjectionRule · 9 attack categories · severity scoring</text>
-
-  <!-- Side label -->
-  <text x="510" y="155" fill="#6e7681" font-size="9.5" font-style="italic">deny_above threshold</text>
-
-  <!-- Arrow 2→3 -->
-  <line x1="340" y1="179" x2="340" y2="199" stroke="#30363d" stroke-width="1.5" marker-end="url(#arr)"/>
-
-  <!-- 3. Symbolic Rule Evaluation -->
-  <rect x="175" y="199" width="330" height="52" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
-  <text x="340" y="221" text-anchor="middle" fill="#3fb950" font-size="13" font-weight="600">Symbolic Rule Evaluation</text>
-  <text x="340" y="240" text-anchor="middle" fill="#8b949e" font-size="10.5">Regex · Schema · Predicate · Composite algebra</text>
-
-  <!-- Rule pills below node 3 -->
-  <g transform="translate(340,265)">
-    <rect x="-155" y="0" width="68" height="20" rx="10" fill="#21262d" stroke="#3fb950" stroke-width="1"/>
-    <text x="-121" y="14" text-anchor="middle" fill="#3fb950" font-size="9">RegexRule</text>
-
-    <rect x="-80" y="0" width="72" height="20" rx="10" fill="#21262d" stroke="#3fb950" stroke-width="1"/>
-    <text x="-44" y="14" text-anchor="middle" fill="#3fb950" font-size="9">SchemaRule</text>
-
-    <rect x="0" y="0" width="84" height="20" rx="10" fill="#21262d" stroke="#3fb950" stroke-width="1"/>
-    <text x="42" y="14" text-anchor="middle" fill="#3fb950" font-size="9">PredicateRule</text>
-
-    <rect x="92" y="0" width="68" height="20" rx="10" fill="#21262d" stroke="#3fb950" stroke-width="1"/>
-    <text x="126" y="14" text-anchor="middle" fill="#3fb950" font-size="9">AllOf/AnyOf</text>
-  </g>
-
-  <!-- Arrow 3→4 -->
-  <line x1="340" y1="290" x2="340" y2="311" stroke="#30363d" stroke-width="1.5" marker-end="url(#arr)"/>
-
-  <!-- 4. Action Graph Validation -->
-  <rect x="175" y="311" width="330" height="52" rx="8" fill="#161b22" stroke="#d2a8ff" stroke-width="1.5"/>
-  <text x="340" y="333" text-anchor="middle" fill="#d2a8ff" font-size="13" font-weight="600">Action Graph Validation</text>
-  <text x="340" y="352" text-anchor="middle" fill="#8b949e" font-size="10.5">ActionPolicyRule · safe agent execution · path sandbox</text>
-
-  <!-- Arrow 4→5 -->
-  <line x1="340" y1="363" x2="340" y2="383" stroke="#30363d" stroke-width="1.5" marker-end="url(#arr)"/>
-
-  <!-- 5. Optional LLM Repair Loop -->
-  <rect x="195" y="383" width="290" height="52" rx="8" fill="#161b22" stroke="#e3b341" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <text x="340" y="405" text-anchor="middle" fill="#e3b341" font-size="13" font-weight="600">Optional LLM Repair Loop</text>
-  <text x="340" y="424" text-anchor="middle" fill="#8b949e" font-size="10.5">Ollama · Gemini · any provider · max_retries</text>
-
-  <!-- Dashed self-loop arrow for retries -->
-  <path d="M 485 409 Q 545 409 545 409 Q 560 409 560 383 Q 560 357 545 357 Q 530 357 510 363" fill="none" stroke="#e3b341" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrY)"/>
-  <text x="563" y="397" fill="#e3b341" font-size="9" font-style="italic">retry</text>
-
-  <!-- Arrow 5→6 -->
-  <line x1="340" y1="435" x2="340" y2="455" stroke="#30363d" stroke-width="1.5" marker-end="url(#arr)"/>
-
-  <!-- 6. Validated, Audited Output -->
-  <rect x="195" y="455" width="290" height="50" rx="8" fill="#1a2638" stroke="#58a6ff" stroke-width="2"/>
-  <text x="340" y="476" text-anchor="middle" fill="#58a6ff" font-size="13" font-weight="700">Validated, Audited Output</text>
-  <text x="340" y="494" text-anchor="middle" fill="#8b949e" font-size="10.5">ok · violations · repairs · full trace</text>
-
-  <!-- ── Arrowhead markers ── -->
-  <defs>
-    <marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-      <path d="M1,1 L7,4 L1,7 Z" fill="#30363d"/>
-    </marker>
-    <marker id="arrY" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-      <path d="M1,1 L7,4 L1,7 Z" fill="#e3b341"/>
-    </marker>
-  </defs>
-
-  <!-- Legend -->
-  <g transform="translate(20,460)">
-    <rect x="0" y="0" width="130" height="52" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
-    <text x="65" y="15" text-anchor="middle" fill="#6e7681" font-size="9" font-weight="600">LEGEND</text>
-    <rect x="8" y="22" width="10" height="10" rx="2" fill="none" stroke="#f78166" stroke-width="1.5"/>
-    <text x="22" y="31" fill="#8b949e" font-size="9">Blocking layer</text>
-    <rect x="8" y="36" width="10" height="10" rx="2" fill="none" stroke="#e3b341" stroke-width="1.5" stroke-dasharray="3,2"/>
-    <text x="22" y="45" fill="#8b949e" font-size="9">Optional layer</text>
-  </g>
-
-</svg>
+  <img src="./architecture.svg" alt="NeuroSym-AI Pipeline Architecture" width="680"/>
 </p>
 
 ---
@@ -132,15 +34,15 @@ Most guardrail tools operate on LLM outputs inside chat interfaces.
 **NeuroSym covers the full pipeline** — from raw voice transcriptions and untrusted inputs,
 through structured execution plans, to the actions an agent takes on your system.
 
-|  | NeMo Guardrails | Guardrails AI | **NeuroSym-AI** |
-|---|---|---|---|
-| No API keys required | ✗ | ✗ | ✅ |
-| Voice / input-side injection detection | ✗ | ✗ | ✅ |
-| Action-graph policy validation | ✗ | ✗ | ✅ |
-| Deterministic offline mode | partial | partial | ✅ |
-| Composite policy algebra | ✗ | ✗ | ✅ |
-| Built-in adversarial benchmark | ✗ | ✗ | ✅ |
-| Full structured audit trace | ✗ | partial | ✅ |
+|                                        | NeMo Guardrails | Guardrails AI | **NeuroSym-AI** |
+| -------------------------------------- | --------------- | ------------- | --------------- |
+| No API keys required                   | ✗               | ✗             | ✅              |
+| Voice / input-side injection detection | ✗               | ✗             | ✅              |
+| Action-graph policy validation         | ✗               | ✗             | ✅              |
+| Deterministic offline mode             | partial         | partial       | ✅              |
+| Composite policy algebra               | ✗               | ✗             | ✅              |
+| Built-in adversarial benchmark         | ✗               | ✗             | ✅              |
+| Full structured audit trace            | ✗               | partial       | ✅              |
 
 ---
 
@@ -290,15 +192,15 @@ Guard(rules=[...], deny_above="high")  # auto-block high + critical
 
 ### Rule Types
 
-| Rule | Use for |
-|---|---|
-| `PromptInjectionRule` | Detect adversarial inputs (9 preset attack categories) |
-| `ActionPolicyRule` | Validate structured agent action plans |
-| `RegexRule` | Pattern-based text validation |
-| `SchemaRule` | JSON Schema enforcement |
-| `PythonPredicateRule` | Arbitrary Python predicate |
-| `DenyIfContains` | Banned substring detection |
-| `AllOf` / `AnyOf` / `Not` / `Implies` | Boolean policy composition |
+| Rule                                  | Use for                                                |
+| ------------------------------------- | ------------------------------------------------------ |
+| `PromptInjectionRule`                 | Detect adversarial inputs (9 preset attack categories) |
+| `ActionPolicyRule`                    | Validate structured agent action plans                 |
+| `RegexRule`                           | Pattern-based text validation                          |
+| `SchemaRule`                          | JSON Schema enforcement                                |
+| `PythonPredicateRule`                 | Arbitrary Python predicate                             |
+| `DenyIfContains`                      | Banned substring detection                             |
+| `AllOf` / `AnyOf` / `Not` / `Implies` | Boolean policy composition                             |
 
 ---
 
@@ -354,7 +256,7 @@ rule = ActionPolicyRule(
 
 ## Design Principles
 
-**Information First** — NeuroSym guards *information*, not prompts. Inputs may come from voice, tools, databases, or LLMs.
+**Information First** — NeuroSym guards _information_, not prompts. Inputs may come from voice, tools, databases, or LLMs.
 
 **Determinism by Default** — Validation runs fully offline. No API keys. No model calls unless you configure them.
 

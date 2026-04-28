@@ -1,0 +1,15 @@
+components:
+  - name: "auth_service"
+    paths: ["auth/.*"]
+    depends_on: []
+    owners: ["@security-team"]
+    
+  - name: "payment_service"
+    paths: ["payments/.*"]
+    depends_on: ["auth_service"]
+    owners: ["@payments-team"]
+    
+  - name: "public_api"
+    paths: ["api/.*"]
+    depends_on: ["auth_service", "payment_service"]
+    owners: ["@backend-team"]

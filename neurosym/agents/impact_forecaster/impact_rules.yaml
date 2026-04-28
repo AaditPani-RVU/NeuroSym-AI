@@ -1,0 +1,34 @@
+- id: "security.auth"
+  when: "path:.*(auth|security|login|token|credentials).*"
+  then:
+    impact: "Security/Auth Layer"
+    severity: "HIGH"
+    required_actions: ["Security Review", "Audit Logs Check"]
+
+- id: "data.schema"
+  when: "path:.*(schemas/|models/|db/|migrations/|sql).*"
+  then:
+    impact: "Database/Schema"
+    severity: "HIGH"
+    required_actions: ["Migration Test", "Backwards Compat Check"]
+
+- id: "api.public"
+  when: "path:.*(api/|routes/|controllers/|endpoints/|openapi|swagger).*"
+  then:
+    impact: "Public API"
+    severity: "HIGH"
+    required_actions: ["API Contract Test", "Documentation Update"]
+
+- id: "ci.build"
+  when: "path:.*(\\.github/|Dockerfile|docker-compose|requirements\\.txt|setup\\.py|pyproject\\.toml|Makefile).*"
+  then:
+    impact: "CI/Build System"
+    severity: "MEDIUM"
+    required_actions: ["Build Verification"]
+
+- id: "process.docs"
+  when: "meta:large_change_without_docs"
+  then:
+    impact: "Maintainability"
+    severity: "MEDIUM"
+    required_actions: ["Documentation Review"]

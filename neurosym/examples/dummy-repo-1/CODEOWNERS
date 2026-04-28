@@ -1,0 +1,4 @@
+* @global-owner
+auth/ @security-team
+api/ @backend-team
+docs/ @docs-team

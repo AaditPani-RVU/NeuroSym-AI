@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/lint-ruff-blueviolet?style=flat-square" />
   <img src="https://img.shields.io/badge/status-stable-brightgreen?style=flat-square" />
 </p>
+![Downloads](https://static.pepy.tech/badge/neurosym-ai)
 
 <p align="center">
   <strong>Neuro-symbolic guardrails for LLMs, voice agents, and agentic pipelines.</strong><br/>

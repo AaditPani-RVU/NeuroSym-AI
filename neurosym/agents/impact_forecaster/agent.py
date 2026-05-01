@@ -1,6 +1,9 @@
 import json
 
-from neurosym.agents.impact_forecaster.impact_models import ImpactHypothesis
+from neurosym.agents.impact_forecaster.impact_models import (
+    ImpactForecastUnavailable,
+    ImpactHypothesis,
+)
 from neurosym.engine.guard import Guard, GuardResult
 from neurosym.llm import LLM
 from neurosym.rules.schema_rule import SchemaRule
@@ -44,42 +47,18 @@ class ImpactAgent:
         # The requirements say "Add retry-on-JSON-failure". Guard does this internally.
 
         if not result.ok:
-            # If after retries it's still invalid, we might return empty or raise.
-            # "Must return structured JSON only".
-            # I will return empty list if completely failed to parse,
-            # to be safe, or raise an exception?
-            # "Must NOT decide severity or final risk" -> The agent doesn't decide risk,
-            # but if it fails to output JSON, we can't do anything.
-            # I'll log/warn (print) and return empty list.
-            # But wait, checking output content...
-            pass
+            raise ImpactForecastUnavailable("LLM response failed schema validation after retries")
 
-        # Try to parse the output into pydantic objects
         try:
-            # result.output is the text. If SchemaRule passed, it should be valid JSON.
-            # Wait, SchemaRule._ensure_json_any might extract the block.
-            # But Guard.generate returns the TEXT output of the LLM.
-            # Does Guard return the PARSED output if apply_json was used?
-            # No, Guard.generate calls _safe_llm_generate returning string.
-            # But SchemaRule validates the string (extracting json if needed).
-
-            # We need to extract the JSON again to parse it into Pydantic.
-            # SchemaRule has helpers _extract_first_json_block.
-            # I should use those or just try json.loads on result.output or extracted block.
-            # Actually, `Guard.apply` returns an artifact with repairs.
-            # Let's inspect `GuardResult` again. It has `artifact`.
-            # If I used `apply`, `artifact.kind` handles parsing if I implemented it.
-            # But `generate` returns `output=text`.
-
-            # Use standard json helper for extraction.
             from neurosym.rules.schema_rule import _ensure_json_any
 
             parsed, _ = _ensure_json_any(result.output, extract=True)
             if parsed is None:
-                return []
+                raise ImpactForecastUnavailable("could not extract JSON from LLM response")
 
-            # Validate with Pydantic
             hypotheses = RootModel[list[ImpactHypothesis]].model_validate(parsed)
             return hypotheses.root
-        except Exception:
-            return []
+        except ImpactForecastUnavailable:
+            raise
+        except Exception as exc:
+            raise ImpactForecastUnavailable(str(exc)) from exc

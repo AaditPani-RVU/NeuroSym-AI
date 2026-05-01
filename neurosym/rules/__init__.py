@@ -8,7 +8,7 @@ from .action_policy import (
     no_path_outside_sandbox,
 )
 from .adversarial import PromptInjectionRule
-from .base import BaseRule, Rule, Severity, Violation, severity_gte
+from .base import BaseRule, Rule, Severity, Violation, rule, severity_gte
 from .composite import AllOf, AnyOf, Implies, Not
 from .python_pred_rule import PythonPredicateRule
 from .regex_rule import RegexRule
@@ -21,6 +21,7 @@ __all__ = [
     "Violation",
     "Severity",
     "severity_gte",
+    "rule",
     # Core rules
     "RegexRule",
     "SchemaRule",

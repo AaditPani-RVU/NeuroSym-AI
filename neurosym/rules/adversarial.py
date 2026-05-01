@@ -6,11 +6,65 @@ attack taxonomies (PAIR, DAN, GCG, Perez et al. 2022, Garak corpus).
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
+import unicodedata
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any
 
 from .base import BaseRule, Severity, Violation
+
+# ---------------------------------------------------------------------------
+# Pack loading
+# ---------------------------------------------------------------------------
+
+_PACKS_DIR = Path(__file__).parent / "packs"
+
+
+def _compute_hash(presets: dict[str, list[str]]) -> str:
+    serialized = json.dumps(presets, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(serialized.encode()).hexdigest()[:16]
+
+
+def _load_pack(name: str) -> tuple[dict[str, list[str]], str]:
+    """Load a versioned pack by name. Returns (presets_dict, sha256_fingerprint).
+
+    Hash is computed over the normalized presets content (same algorithm as
+    _compute_hash / _BUILTIN_PACK_HASH) so hashes are comparable regardless
+    of construction path.
+    """
+    pack_file = _PACKS_DIR / f"{name}.json"
+    if not pack_file.exists():
+        available = [p.stem for p in _PACKS_DIR.glob("*.json")]
+        raise ValueError(f"Pack {name!r} not found. Available: {available}")
+    data = json.loads(pack_file.read_bytes())
+    pack_hash = _compute_hash(data["presets"])
+    return data["presets"], pack_hash
+
+
+def list_packs() -> list[dict[str, Any]]:
+    """Return metadata for all packs in the packs directory."""
+    result = []
+    for p in sorted(_PACKS_DIR.glob("*.json")):
+        try:
+            data = json.loads(p.read_bytes())
+            pack_hash = _compute_hash(data.get("presets", {}))
+            result.append(
+                {
+                    "name": p.stem,
+                    "version": data.get("version", "?"),
+                    "description": data.get("description", ""),
+                    "presets": list(data.get("presets", {}).keys()),
+                    "hash": pack_hash,
+                    "size_bytes": p.stat().st_size,
+                }
+            )
+        except Exception:
+            pass
+    return result
+
 
 # ---------------------------------------------------------------------------
 # Bundled adversarial pattern library
@@ -103,14 +157,23 @@ _PRESETS: dict[str, list[str]] = {
 }
 
 
-def get_preset_patterns(names: Iterable[str]) -> list[tuple[str, re.Pattern[str]]]:
+# Stable fingerprint of the builtin preset library — recorded in every violation.
+_BUILTIN_PACK_NAME = "injection-v1"
+_BUILTIN_PACK_HASH: str = _compute_hash(_PRESETS)
+
+
+def get_preset_patterns(
+    names: Iterable[str],
+    source: dict[str, list[str]] | None = None,
+) -> list[tuple[str, re.Pattern[str]]]:
     """Compile patterns for the given preset names. Returns (raw_pattern, compiled) pairs."""
+    preset_source = source if source is not None else _PRESETS
     compiled: list[tuple[str, re.Pattern[str]]] = []
     flags = re.IGNORECASE | re.MULTILINE
     for name in names:
-        if name not in _PRESETS:
-            raise ValueError(f"Unknown preset: {name!r}. Available: {sorted(_PRESETS)}")
-        for pat in _PRESETS[name]:
+        if name not in preset_source:
+            raise ValueError(f"Unknown preset: {name!r}. Available: {sorted(preset_source)}")
+        for pat in preset_source[name]:
             compiled.append((pat, re.compile(pat, flags)))
     return compiled
 
@@ -145,6 +208,8 @@ class PromptInjectionRule(BaseRule):
         extra_patterns: Additional regex patterns to add on top of presets.
         severity: Violation severity level (default: "critical").
         max_examples: Max number of matching spans to include in violation meta.
+        pack: Name of a versioned pack file to load (e.g. "injection-v1").
+              Defaults to the builtin pack embedded in the library.
     """
 
     id: str = "adv.prompt_injection"
@@ -156,13 +221,22 @@ class PromptInjectionRule(BaseRule):
         extra_patterns: Iterable[str] | None = None,
         severity: Severity = "critical",
         max_examples: int = 3,
+        pack: str | None = None,
     ) -> None:
         self.id = id
         self._severity = severity
         self.max_examples = max(0, int(max_examples))
 
-        active_presets = presets if presets is not None else _ALL_PRESETS
-        self._patterns = get_preset_patterns(active_presets)
+        if pack is not None:
+            preset_source, self._pack_hash = _load_pack(pack)
+            self._pack_name = pack
+        else:
+            preset_source = _PRESETS
+            self._pack_name = _BUILTIN_PACK_NAME
+            self._pack_hash = _BUILTIN_PACK_HASH
+
+        active_presets = presets if presets is not None else list(preset_source.keys())
+        self._patterns = get_preset_patterns(active_presets, source=preset_source)
 
         flags = re.IGNORECASE | re.MULTILINE
         for pat in extra_patterns or []:
@@ -170,6 +244,7 @@ class PromptInjectionRule(BaseRule):
 
     def check(self, output: Any) -> list[Violation] | Violation | None:
         text = output if isinstance(output, str) else str(output)
+        text = unicodedata.normalize("NFKC", text)
         hits: list[dict[str, Any]] = []
 
         for raw_pat, compiled in self._patterns:
@@ -193,7 +268,13 @@ class PromptInjectionRule(BaseRule):
             rule_id=self.id,
             message=f"Prompt injection detected ({len(hits)} pattern(s) matched)",
             severity=self._severity,
-            meta={"matches": hits, "total_patterns_triggered": len(hits)},
+            meta={
+                "matches": hits,
+                "total_patterns_triggered": len(hits),
+                "pack": self._pack_name,
+                "pack_hash": self._pack_hash,
+            },
+            user_message="Input was blocked: potentially unsafe content detected.",
         )
 
     @staticmethod

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from .agents.impact_forecaster.impact_models import ImpactForecastUnavailable
 from .engine.guard import Artifact, Guard, GuardResult
+from .policy import LintIssue, lint
 from .rules.action_policy import (
     DESTRUCTIVE_ACTIONS,
     HIGH_RISK_ACTIONS,
@@ -11,8 +13,9 @@ from .rules.action_policy import (
     no_path_outside_sandbox,
 )
 from .rules.adversarial import PromptInjectionRule
-from .rules.base import BaseRule, Rule, Severity, Violation, severity_gte
+from .rules.base import BaseRule, Rule, Severity, StreamingRule, Violation, rule, severity_gte
 from .rules.composite import AllOf, AnyOf, Implies, Not
+from .rules.output import SecretLeakageRule, SystemPromptRegurgitationRule
 from .version import __version__
 
 __all__ = [
@@ -20,14 +23,22 @@ __all__ = [
     "Artifact",
     "Guard",
     "GuardResult",
+    # Policy linter
+    "lint",
+    "LintIssue",
     # Base
     "Rule",
     "BaseRule",
+    "StreamingRule",
     "Violation",
     "Severity",
     "severity_gte",
+    "rule",
     # Adversarial
     "PromptInjectionRule",
+    # Output guards
+    "SecretLeakageRule",
+    "SystemPromptRegurgitationRule",
     # Action policy
     "ActionPolicyRule",
     "DESTRUCTIVE_ACTIONS",
@@ -41,5 +52,7 @@ __all__ = [
     "AnyOf",
     "Not",
     "Implies",
+    # Agents
+    "ImpactForecastUnavailable",
     "__version__",
 ]

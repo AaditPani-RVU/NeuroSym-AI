@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/pypi-v0.2.0-orange?style=flat-square" />
+  <img src="https://img.shields.io/badge/pypi-v0.3.0-orange?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
   <img src="https://img.shields.io/badge/mypy-strict-success?style=flat-square" />
   <img src="https://img.shields.io/badge/lint-ruff-blueviolet?style=flat-square" />
@@ -38,11 +38,15 @@ through structured execution plans, to the actions an agent takes on your system
 | -------------------------------------- | --------------- | ------------- | --------------- |
 | No API keys required                   | ✗               | ✗             | ✅              |
 | Voice / input-side injection detection | ✗               | ✗             | ✅              |
+| **Output-side guards (secret leakage)** | ✗              | ✗             | ✅ **new**      |
+| **Streaming guard (mid-token abort)**  | ✗               | ✗             | ✅ **new**      |
 | Action-graph policy validation         | ✗               | ✗             | ✅              |
 | Deterministic offline mode             | partial         | partial       | ✅              |
 | Composite policy algebra               | ✗               | ✗             | ✅              |
+| SAT/SMT formal policy linter           | ✗               | ✗             | ✅              |
 | Built-in adversarial benchmark         | ✗               | ✗             | ✅              |
 | Full structured audit trace            | ✗               | partial       | ✅              |
+| `py.typed` (mypy/pyright ready)        | ✗               | ✗             | ✅ **new**      |
 
 ---
 
@@ -170,16 +174,25 @@ print(results.report())
 
 ### Guard
 
-The central engine. Two modes:
+The central engine. Three modes:
 
 ```python
-# Information-first (no LLM required — fully offline)
+# 1. Information-first (no LLM required — fully offline)
 Guard(rules=[...]).apply_text("some input")
 Guard(rules=[...]).apply_json({"key": "value"})
 Guard(rules=[...]).apply(Artifact(kind="text", content="..."))
 
-# LLM-first (generate + validate + repair)
+# 2. LLM-first (generate + validate + repair loop)
 Guard(llm=my_llm, rules=[...], max_retries=2).generate("my prompt")
+
+# 3. Streaming (yield chunks, abort mid-stream on hard-deny)
+gen = Guard(llm=my_llm, rules=[SecretLeakageRule()]).stream("my prompt")
+try:
+    while True:
+        chunk = next(gen)
+        print(chunk, end="", flush=True)
+except StopIteration as stop:
+    result = stop.value   # GuardResult with full trace
 ```
 
 ### Severity Levels
@@ -192,15 +205,17 @@ Guard(rules=[...], deny_above="high")  # auto-block high + critical
 
 ### Rule Types
 
-| Rule                                  | Use for                                                |
-| ------------------------------------- | ------------------------------------------------------ |
-| `PromptInjectionRule`                 | Detect adversarial inputs (9 preset attack categories) |
-| `ActionPolicyRule`                    | Validate structured agent action plans                 |
-| `RegexRule`                           | Pattern-based text validation                          |
-| `SchemaRule`                          | JSON Schema enforcement                                |
-| `PythonPredicateRule`                 | Arbitrary Python predicate                             |
-| `DenyIfContains`                      | Banned substring detection                             |
-| `AllOf` / `AnyOf` / `Not` / `Implies` | Boolean policy composition                             |
+| Rule                                   | Side   | Use for                                                |
+| -------------------------------------- | ------ | ------------------------------------------------------ |
+| `PromptInjectionRule`                  | Input  | Detect adversarial inputs (9 preset attack categories) |
+| `SecretLeakageRule`                    | **Output** | Block AWS keys, JWTs, tokens, private keys in LLM responses |
+| `SystemPromptRegurgitationRule`        | **Output** | Detect verbatim system-prompt echo in output           |
+| `ActionPolicyRule`                     | Input  | Validate structured agent action plans                 |
+| `RegexRule`                            | Either | Pattern-based text validation                          |
+| `SchemaRule`                           | Either | JSON Schema enforcement                                |
+| `PythonPredicateRule`                  | Either | Arbitrary Python predicate                             |
+| `DenyIfContains`                       | Either | Banned substring detection                             |
+| `AllOf` / `AnyOf` / `Not` / `Implies` | Either | Boolean policy composition                             |
 
 ---
 
@@ -338,14 +353,86 @@ for cat, cat_result in results.by_category().items():
 
 ---
 
+## Output Guards — What the Model Emits
+
+Every other guardrail library is input-only. NeuroSym guards both sides.
+
+```python
+from neurosym import Guard, SecretLeakageRule, SystemPromptRegurgitationRule
+
+# Block AWS keys, GitHub tokens, JWTs, private keys, bearer tokens, etc.
+guard = Guard(rules=[SecretLeakageRule()], deny_above="critical")
+
+result = guard.apply_text("Here is your key: AKIAIOSFODNN7EXAMPLE")
+print(result.blocked)    # True
+print(result.violations[0]["rule_id"])  # output.secret_leakage
+
+# Block the LLM from echoing your system prompt back to the user
+guard2 = Guard(rules=[
+    SystemPromptRegurgitationRule("You are a helpful assistant. Instructions: ..."),
+])
+```
+
+`SecretLeakageRule` also implements the `StreamingRule` protocol — it catches
+credentials that arrive split across chunk boundaries and can abort the stream
+the moment a secret appears.
+
+---
+
+## Streaming Guard
+
+```python
+from neurosym import Guard, SecretLeakageRule
+
+guard = Guard(llm=my_llm, rules=[SecretLeakageRule()], deny_above="critical")
+
+# Chunks are yielded in real-time; the stream aborts if a hard-deny rule fires
+gen = guard.stream("Write me a summary of the project.")
+try:
+    while True:
+        print(next(gen), end="", flush=True)
+except StopIteration as stop:
+    result = stop.value   # GuardResult — check result.ok, result.violations
+```
+
+Any rule that implements `feed(chunk) / finalize() / reset()` is evaluated
+incrementally. Batch rules (regex, schema, etc.) run on the complete buffer
+after the stream ends.
+
+---
+
+## Agent System
+
+Load agent system prompts from `.md` files on disk:
+
+```python
+from neurosym.agents import get_agent, list_agents
+
+# List available agents
+print(list_agents())   # ['neurosym_dev_agent', 'security_auditor']
+
+# Load a prompt (cached after first read)
+prompt = get_agent("neurosym_dev_agent")
+```
+
+Ship your own agents by dropping `my_agent.md` into `neurosym/agents/` or point
+the loader at a custom directory. Typed exceptions (`AgentNotFoundError`,
+`AgentLoadError`) mean failures are never silent.
+
+---
+
 ## CLI
 
 ```bash
-# Show help
-neurosym --help
+# Diagnose your installation (version, packs, deps, benchmark)
+python -m neurosym doctor
 
-# Run interactively
-neurosym chat
+# List / inspect versioned rule packs
+python -m neurosym packs list
+python -m neurosym packs show injection-v1
+
+# Run the formal policy linter demo
+python -m neurosym policy lint
 ```
 
 ---

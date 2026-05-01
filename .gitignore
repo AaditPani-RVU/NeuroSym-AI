@@ -55,3 +55,7 @@ TestPyPI-Recovery-Codes-*.txt
 # Temporary extraction folder
 temp_final/
 temp_*/
+
+# Internal planning / feedback docs
+feedback.md
+codex_adversial_fix.md

@@ -564,7 +564,8 @@ class Guard:
         if self.llm is None:
             raise RuntimeError("Guard.stream() called but no llm was provided to Guard(llm=...)")
 
-        buffer = ""
+        raw_buffer = ""
+        emitted_buffer = ""
         streaming_violations: list[Violation] = []
 
         stream_rules = [r for r in self.rules if isinstance(r, StreamingRule)]
@@ -583,7 +584,7 @@ class Guard:
             chunk_iter = [self._safe_llm_generate(prompt, **gen_kwargs)]
 
         for chunk in chunk_iter:
-            buffer += chunk
+            raw_buffer += chunk
 
             for r in stream_rules:
                 try:
@@ -598,10 +599,13 @@ class Guard:
                     ]
                 streaming_violations.extend(vs)
 
-            yield chunk
-
+            # Check before yielding so the chunk that triggers a hard deny is
+            # not forwarded to the consumer (Codex finding, fixed in 0.3.1).
             if stream_rules and self._has_hard_deny(streaming_violations):
                 break
+
+            emitted_buffer += chunk
+            yield chunk
 
         for r in stream_rules:
             try:
@@ -618,7 +622,7 @@ class Guard:
         batch_violations: list[Violation] = []
         for br in batch_rules:
             try:
-                batch_violations.extend(br.evaluate(buffer))
+                batch_violations.extend(br.evaluate(raw_buffer))
             except Exception as exc:
                 batch_violations.append(
                     Violation(
@@ -632,13 +636,13 @@ class Guard:
         ok, blocked, hard_denied = self._compute_ok_blocked(all_violations)
 
         return GuardResult(
-            output=buffer,
+            output=emitted_buffer,
             trace=[
                 TraceEntry(
                     attempt=1,
                     prompt_used=prompt,
                     input=None,
-                    output=buffer,
+                    output=emitted_buffer,
                     violations=[self._v_to_dict(v) for v in all_violations],
                     repairs=[],
                 )
@@ -648,5 +652,5 @@ class Guard:
             hard_denied=hard_denied,
             violations=[self._v_to_dict(v) for v in all_violations],
             repairs=[],
-            artifact=Artifact(kind="text", content=buffer),
+            artifact=Artifact(kind="text", content=emitted_buffer),
         )

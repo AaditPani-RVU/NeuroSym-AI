@@ -5,6 +5,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.2] — 2026-05-10 — "Semantic fallback, lean install, forecaster hardening"
+
+### Added
+
+- **`SemanticInjectionRule`** (`rules/semantic.py`) — embedding-based fallback detector that
+  catches paraphrase attacks missed by the regex layer. Uses `sentence-transformers`
+  (`all-MiniLM-L6-v2` by default) with cosine similarity against curated per-category attack
+  centroids. Block rate target: 95%+ combined with `PromptInjectionRule`. Composable with
+  existing rules; model and centroids are pinned per version for reproducible audit traces.
+- **`neurosym/rules/centroids/injection-centroids-v1.json`** — 9 attack categories × ~8
+  paraphrase centroid texts each; designed to catch paraphrases that bypass all regex presets.
+- **`[embeddings]` extra** (`pip install 'neurosym-ai[embeddings]'`) — gates
+  `sentence-transformers>=3.0` and `numpy>=1.24` as optional dependencies.
+- **`[cli]` extra** — `typer>=0.12` and `rich>=13.7` moved out of core.
+- **`[llm]` extra** — `httpx>=0.27` and `tenacity>=9.0` moved out of core.
+- **`[forecaster]` extra** — `pydantic>=2.0` and `PyYAML>=6.0` moved out of core.
+- **`[all]` extra** — convenience meta-extra that installs every optional feature.
+- **`impact_exceptions.py`** — `ImpactForecastUnavailable` split into its own zero-dep module
+  so `import neurosym` never fails when `[forecaster]` is not installed.
+
+### Fixed
+
+- **`ImpactAgent.hypothesize()` silent `[]` on failure** — all failure paths (`result.ok=False`,
+  unparseable output, schema mismatch) now raise `ImpactForecastUnavailable` with a descriptive
+  `.reason`. Returning `[]` on failure was indistinguishable from "no impact found".
+- **`ImpactForecastUnavailable` not exported from forecaster package** — now re-exported from
+  `neurosym.agents.impact_forecaster` in addition to the top-level `neurosym` namespace.
+
+### Changed
+
+- **Core install footprint reduced** — `dependencies` in `pyproject.toml` trimmed from 7 packages
+  to 1 (`jsonschema`). Guard + rules + benchmark now work with a minimal install.
+- **`dev` extra** now depends on `neurosym-ai[all]` so the full test suite always runs against
+  every optional feature.
+
+### Added (tests)
+
+- `tests/test_semantic_injection.py` — 20 structural/mock tests + 10 integration tests
+  (skipped when `sentence-transformers` not installed): threshold behaviour, category filtering,
+  meta field correctness, `ImportError` path, `evaluate()` normalisation contract.
+- `tests/test_impact_agent.py` — 15 tests for `ImpactAgent.hypothesize()`: happy path (single,
+  multiple, empty list, pre-parsed Python list, markdown-fenced JSON), failure paths (guard
+  failure, unparseable output, schema mismatch, wrong type), regression for the silent-`[]` bug,
+  export contract from both `neurosym` and `neurosym.agents.impact_forecaster`.
+
+---
+
 ## [0.3.1] — 2026-05-03 — "Test the v0.3.0 surface"
 
 ### Fixed

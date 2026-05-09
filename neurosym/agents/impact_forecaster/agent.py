@@ -1,9 +1,7 @@
 import json
 
-from neurosym.agents.impact_forecaster.impact_models import (
-    ImpactForecastUnavailable,
-    ImpactHypothesis,
-)
+from neurosym.agents.impact_forecaster.impact_exceptions import ImpactForecastUnavailable
+from neurosym.agents.impact_forecaster.impact_models import ImpactHypothesis
 from neurosym.engine.guard import Guard, GuardResult
 from neurosym.llm import LLM
 from neurosym.rules.schema_rule import SchemaRule

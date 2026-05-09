@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .agents.impact_forecaster.impact_models import ImpactForecastUnavailable
+from .agents.impact_forecaster.impact_exceptions import ImpactForecastUnavailable
 from .engine.guard import Artifact, Guard, GuardResult
 from .policy import LintIssue, lint
 from .rules.action_policy import (
@@ -16,6 +16,7 @@ from .rules.adversarial import PromptInjectionRule
 from .rules.base import BaseRule, Rule, Severity, StreamingRule, Violation, rule, severity_gte
 from .rules.composite import AllOf, AnyOf, Implies, Not
 from .rules.output import SecretLeakageRule, SystemPromptRegurgitationRule
+from .rules.semantic import SemanticInjectionRule
 from .version import __version__
 
 __all__ = [
@@ -36,6 +37,7 @@ __all__ = [
     "rule",
     # Adversarial
     "PromptInjectionRule",
+    "SemanticInjectionRule",
     # Output guards
     "SecretLeakageRule",
     "SystemPromptRegurgitationRule",

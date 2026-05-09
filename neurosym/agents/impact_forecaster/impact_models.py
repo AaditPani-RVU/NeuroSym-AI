@@ -2,16 +2,15 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from .impact_exceptions import ImpactForecastUnavailable
 
-class ImpactForecastUnavailable(RuntimeError):
-    """Raised when the LLM fails to return valid hypotheses after retries.
-
-    Never return [] on failure — that is indistinguishable from 'no impact found'.
-    """
-
-    def __init__(self, reason: str) -> None:
-        super().__init__(f"ImpactForecaster unavailable: {reason}")
-        self.reason = reason
+__all__ = [
+    "ImpactForecastUnavailable",
+    "ImpactHypothesis",
+    "EvidenceItem",
+    "ImpactEdge",
+    "ImpactForecast",
+]
 
 
 class ImpactHypothesis(BaseModel):

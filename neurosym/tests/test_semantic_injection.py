@@ -557,3 +557,156 @@ class TestSemanticInjectionRuleIntegration:
         assert v is not None
         assert v.meta is not None
         assert len(v.meta["centroids_hash"]) == 16
+
+
+# ---------------------------------------------------------------------------
+# Near-miss reporting tests (mock-based — no sentence-transformers required)
+# ---------------------------------------------------------------------------
+
+
+class TestNearMissReporting:
+    def _rule_with_nm(self, sim: float, threshold: float = 0.75, nm_threshold: float = 0.5):
+        """Return a SemanticInjectionRule wired to produce a fixed similarity score."""
+        from unittest.mock import MagicMock
+
+        import numpy as np
+
+        r = SemanticInjectionRule(
+            threshold=threshold,
+            near_miss_threshold=nm_threshold,
+        )
+        encoder = MagicMock()
+        encoder.encode.return_value = np.array([[1.0, 0.0]], dtype=np.float32)
+        cats, texts, matrix, h = _make_centroid_matrix(sim)
+        return r, encoder, (cats, texts, matrix, h)
+
+    def test_near_miss_reported_when_score_in_window(self) -> None:
+        r, enc, mat = self._rule_with_nm(sim=0.65, threshold=0.75, nm_threshold=0.5)
+        with (
+            patch("neurosym.rules.semantic._get_encoder", return_value=enc),
+            patch("neurosym.rules.semantic._build_centroid_matrix", return_value=mat),
+        ):
+            nms = r.near_miss("some borderline text")
+        assert len(nms) == 1
+        assert nms[0].rule_id == "adv.semantic_injection"
+        assert 0.5 <= nms[0].score < 0.75
+        assert nms[0].meta is not None
+        assert nms[0].meta["similarity"] == nms[0].score
+        assert nms[0].meta["threshold"] == 0.75
+        assert nms[0].meta["near_miss_threshold"] == 0.5
+
+    def test_near_miss_not_reported_when_above_block_threshold(self) -> None:
+        # Score above threshold — evaluate() blocks it; near_miss() returns nothing
+        r, enc, mat = self._rule_with_nm(sim=0.9, threshold=0.75, nm_threshold=0.5)
+        with (
+            patch("neurosym.rules.semantic._get_encoder", return_value=enc),
+            patch("neurosym.rules.semantic._build_centroid_matrix", return_value=mat),
+        ):
+            nms = r.near_miss("some text")
+        assert nms == []
+
+    def test_near_miss_not_reported_when_below_nm_threshold(self) -> None:
+        # Score below near_miss_threshold — nothing to report
+        r, enc, mat = self._rule_with_nm(sim=0.3, threshold=0.75, nm_threshold=0.5)
+        with (
+            patch("neurosym.rules.semantic._get_encoder", return_value=enc),
+            patch("neurosym.rules.semantic._build_centroid_matrix", return_value=mat),
+        ):
+            nms = r.near_miss("totally safe text")
+        assert nms == []
+
+    def test_near_miss_disabled_when_threshold_zero(self) -> None:
+        # near_miss_threshold=0.0 (default) disables reporting without even calling encoder
+        r = SemanticInjectionRule(threshold=0.75, near_miss_threshold=0.0)
+        with patch("neurosym.rules.semantic._get_encoder") as mock_enc:
+            nms = r.near_miss("anything")
+            mock_enc.assert_not_called()
+        assert nms == []
+
+    def test_near_miss_empty_input_returns_empty(self) -> None:
+        r = SemanticInjectionRule(threshold=0.75, near_miss_threshold=0.5)
+        nms = r.near_miss("")
+        assert nms == []
+
+    def test_guard_surfaces_near_misses_on_passing_result(self) -> None:
+        from unittest.mock import MagicMock, patch
+
+        import numpy as np
+
+        from neurosym.engine.guard import Guard
+
+        r = SemanticInjectionRule(threshold=0.75, near_miss_threshold=0.5)
+        encoder = MagicMock()
+        encoder.encode.return_value = np.array([[1.0, 0.0]], dtype=np.float32)
+        cats, texts, matrix, h = _make_centroid_matrix(0.65)  # in near-miss window
+
+        with (
+            patch("neurosym.rules.semantic._get_encoder", return_value=encoder),
+            patch(
+                "neurosym.rules.semantic._build_centroid_matrix",
+                return_value=(cats, texts, matrix, h),
+            ),
+        ):
+            guard = Guard(rules=[r])
+            result = guard.apply_text("borderline input")
+
+        assert result.ok
+        assert result.violations == []
+        assert len(result.near_misses) == 1
+        nm = result.near_misses[0]
+        assert nm["rule_id"] == "adv.semantic_injection"
+        assert 0.5 <= nm["score"] < 0.75
+
+    def test_guard_no_near_misses_when_blocked(self) -> None:
+        from unittest.mock import MagicMock, patch
+
+        import numpy as np
+
+        from neurosym.engine.guard import Guard
+
+        r = SemanticInjectionRule(threshold=0.75, near_miss_threshold=0.5)
+        encoder = MagicMock()
+        encoder.encode.return_value = np.array([[1.0, 0.0]], dtype=np.float32)
+        cats, texts, matrix, h = _make_centroid_matrix(0.9)  # above threshold — blocked
+
+        with (
+            patch("neurosym.rules.semantic._get_encoder", return_value=encoder),
+            patch(
+                "neurosym.rules.semantic._build_centroid_matrix",
+                return_value=(cats, texts, matrix, h),
+            ),
+        ):
+            guard = Guard(rules=[r])
+            result = guard.apply_text("injection attempt")
+
+        assert not result.ok
+        assert len(result.violations) == 1
+        assert result.near_misses == []  # near_misses suppressed when blocked
+
+    def test_near_miss_in_to_dict(self) -> None:
+        from unittest.mock import MagicMock, patch
+
+        import numpy as np
+
+        from neurosym.engine.guard import Guard
+
+        r = SemanticInjectionRule(threshold=0.75, near_miss_threshold=0.5)
+        encoder = MagicMock()
+        encoder.encode.return_value = np.array([[1.0, 0.0]], dtype=np.float32)
+        cats, texts, matrix, h = _make_centroid_matrix(0.65)
+
+        with (
+            patch("neurosym.rules.semantic._get_encoder", return_value=encoder),
+            patch(
+                "neurosym.rules.semantic._build_centroid_matrix",
+                return_value=(cats, texts, matrix, h),
+            ),
+        ):
+            result = Guard(rules=[r]).apply_text("borderline")
+
+        d = result.to_dict()
+        assert "near_misses" in d
+        assert len(d["near_misses"]) == 1
+
+    def test_near_miss_exported_from_top_level(self) -> None:
+        from neurosym import NearMiss, NearMissRule  # noqa: F401

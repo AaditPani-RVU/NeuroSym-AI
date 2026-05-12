@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.4] — 2026-05-12 — "Near-miss reporting"
+
+### Added
+
+- **Near-miss reporting** — `SemanticInjectionRule` now accepts a `near_miss_threshold`
+  parameter (default `0.0`, disabled). When set, inputs that score between
+  `near_miss_threshold` and `threshold` produce `NearMiss` entries in `GuardResult.near_misses`
+  instead of violations. Useful for monitoring borderline traffic, threshold tuning, and
+  flagging inputs for human review without blocking them.
+- **`NearMiss` dataclass** and **`NearMissRule` protocol** exported from `neurosym` top level
+  and `neurosym.rules`. Rules implementing `NearMissRule` are automatically called by
+  `Guard.apply()` and `Guard.aapply()` when no violations were raised.
+- `GuardResult.near_misses` field (list of dicts) included in `to_dict()` output.
+
+---
+
 ## [0.3.3] — 2026-05-12 — "BanTopicsRule, SemanticInjectionRule late_resolve hardening"
 
 ### Added

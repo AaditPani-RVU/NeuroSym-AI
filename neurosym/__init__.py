@@ -13,7 +13,17 @@ from .rules.action_policy import (
     no_path_outside_sandbox,
 )
 from .rules.adversarial import PromptInjectionRule
-from .rules.base import BaseRule, Rule, Severity, StreamingRule, Violation, rule, severity_gte
+from .rules.base import (
+    BaseRule,
+    NearMiss,
+    NearMissRule,
+    Rule,
+    Severity,
+    StreamingRule,
+    Violation,
+    rule,
+    severity_gte,
+)
 from .rules.composite import AllOf, AnyOf, Implies, Not
 from .rules.harm import BanTopicsRule
 from .rules.output import SecretLeakageRule, SystemPromptRegurgitationRule
@@ -33,6 +43,8 @@ __all__ = [
     "BaseRule",
     "StreamingRule",
     "Violation",
+    "NearMiss",
+    "NearMissRule",
     "Severity",
     "severity_gte",
     "rule",

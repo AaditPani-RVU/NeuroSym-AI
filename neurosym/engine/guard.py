@@ -8,7 +8,15 @@ from collections.abc import Generator, Iterable
 from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol, cast, runtime_checkable
 
-from neurosym.rules.base import Rule, Severity, StreamingRule, Violation, severity_gte
+from neurosym.rules.base import (
+    NearMiss,
+    NearMissRule,
+    Rule,
+    Severity,
+    StreamingRule,
+    Violation,
+    severity_gte,
+)
 
 
 @runtime_checkable
@@ -88,6 +96,7 @@ class GuardResult:
     hard_denied: bool = False
     violations: list[dict[str, Any]] = field(default_factory=list)
     repairs: list[dict[str, Any]] = field(default_factory=list)
+    near_misses: list[dict[str, Any]] = field(default_factory=list)
     artifact: Artifact | None = None
 
     def report(self) -> str:
@@ -116,6 +125,7 @@ class GuardResult:
             "hard_denied": self.hard_denied,
             "violations": self.violations,
             "repairs": self.repairs,
+            "near_misses": self.near_misses,
             "artifact": asdict(self.artifact) if self.artifact else None,
             "trace": [asdict(t) for t in self.trace],
         }
@@ -174,6 +184,27 @@ class Guard:
             "meta": getattr(v, "meta", None),
             "user_message": getattr(v, "user_message", None),
         }
+
+    @staticmethod
+    def _nm_to_dict(nm: NearMiss) -> dict[str, Any]:
+        return {
+            "rule_id": nm.rule_id,
+            "message": nm.message,
+            "score": nm.score,
+            "meta": nm.meta,
+        }
+
+    def _collect_near_misses(self, output: Any) -> list[dict[str, Any]]:
+        """Call near_miss() on any rule implementing NearMissRule. Only called on ok results."""
+        results: list[dict[str, Any]] = []
+        for r in self.rules:
+            if isinstance(r, NearMissRule):
+                try:
+                    for nm in r.near_miss(output):
+                        results.append(self._nm_to_dict(nm))
+                except Exception:
+                    pass
+        return results
 
     def _has_hard_deny(self, violations: list[Violation]) -> bool:
         if self._deny_rule_ids and any(v.rule_id in self._deny_rule_ids for v in violations):
@@ -303,6 +334,7 @@ class Guard:
         )
 
         ok, blocked, hard_denied = self._compute_ok_blocked(violations)
+        near_misses = self._collect_near_misses(repaired_artifact.content) if ok else []
 
         return GuardResult(
             output=repaired_artifact.content,
@@ -312,6 +344,7 @@ class Guard:
             hard_denied=hard_denied,
             violations=[self._v_to_dict(v) for v in violations],
             repairs=[r.to_dict() for r in repairs],
+            near_misses=near_misses,
             artifact=repaired_artifact,
         )
 
@@ -363,6 +396,7 @@ class Guard:
             )
         ]
         ok, blocked, hard_denied = self._compute_ok_blocked(violations)
+        near_misses = self._collect_near_misses(repaired_artifact.content) if ok else []
         return GuardResult(
             output=repaired_artifact.content,
             trace=trace,
@@ -371,6 +405,7 @@ class Guard:
             hard_denied=hard_denied,
             violations=[self._v_to_dict(v) for v in violations],
             repairs=[r.to_dict() for r in repairs],
+            near_misses=near_misses,
             artifact=repaired_artifact,
         )
 

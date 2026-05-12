@@ -82,6 +82,41 @@ class Rule(Protocol):
     def evaluate(self, output: Any) -> list[Violation]: ...
 
 
+@dataclass(frozen=True)
+class NearMiss:
+    """
+    A signal that an input was close to triggering a violation but did not
+    meet the threshold to block.
+
+    Useful for auditing, threshold tuning, and flagging borderline inputs
+    for human review without blocking them outright.
+
+    score: proximity to triggering expressed as the raw rule-specific value
+           (e.g. cosine similarity for SemanticInjectionRule).
+    """
+
+    rule_id: str
+    message: str
+    score: float
+    meta: dict[str, Any] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@runtime_checkable
+class NearMissRule(Protocol):
+    """Optional protocol for rules that can report near-miss signals.
+
+    Implement alongside BaseRule to allow Guard to surface borderline inputs
+    that passed but were close to being blocked.
+    """
+
+    id: str
+
+    def near_miss(self, output: Any) -> list[NearMiss]: ...
+
+
 @runtime_checkable
 class StreamingRule(Protocol):
     """Rule that evaluates output incrementally as it streams chunk by chunk.

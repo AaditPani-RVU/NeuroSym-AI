@@ -18,7 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from .base import BaseRule, Severity, Violation
+from .base import BaseRule, NearMiss, Severity, Violation
 
 _CENTROIDS_DIR = Path(__file__).parent / "centroids"
 _DEFAULT_CENTROIDS = "injection-centroids-v1"
@@ -129,6 +129,7 @@ class SemanticInjectionRule(BaseRule):
         severity: Severity = "high",
         categories: list[str] | None = None,
         tail_fraction: float = 0.25,
+        near_miss_threshold: float = 0.0,
     ) -> None:
         self.id = id
         self._model = model
@@ -142,6 +143,7 @@ class SemanticInjectionRule(BaseRule):
         # the text in isolation — catches injection payloads buried after a long
         # innocuous preamble that dilutes the full-text embedding below threshold.
         self._tail_fraction = max(0.0, min(1.0, float(tail_fraction)))
+        self._near_miss_threshold = max(0.0, float(near_miss_threshold))
 
     def check(self, output: Any) -> Violation | None:
         import numpy as np  # type: ignore[import]
@@ -241,3 +243,65 @@ class SemanticInjectionRule(BaseRule):
                 )
 
         return None
+
+    def near_miss(self, output: Any) -> list[NearMiss]:
+        """Return near-miss signals when input scored between near_miss_threshold
+        and threshold — i.e. close to triggering but not blocked.
+
+        Returns an empty list when near_miss_threshold is 0.0 (default, disabled)
+        or when the input would already produce a violation.
+        """
+        if self._near_miss_threshold <= 0.0:
+            return []
+
+        import numpy as np  # type: ignore[import]
+
+        text = output if isinstance(output, str) else str(output)
+        text = unicodedata.normalize("NFKC", text).strip()
+        if not text:
+            return []
+
+        encoder = _get_encoder(self._model)
+        all_cats, all_texts, centroid_matrix, centroids_hash = _build_centroid_matrix(
+            self._model, self._centroids
+        )
+
+        if self._filter_cats is not None:
+            mask = np.array([c in self._filter_cats for c in all_cats])
+            if not mask.any():
+                return []
+            centroid_matrix = centroid_matrix[mask]
+            filtered_cats = [c for c, keep in zip(all_cats, mask.tolist(), strict=True) if keep]
+            filtered_texts = [t for t, keep in zip(all_texts, mask.tolist(), strict=True) if keep]
+        else:
+            filtered_cats = all_cats
+            filtered_texts = all_texts
+
+        emb = encoder.encode([text], normalize_embeddings=True, show_progress_bar=False)[0]
+        sims = centroid_matrix @ emb
+        idx = int(np.argmax(sims))
+        best_sim = float(sims[idx])
+
+        if self._near_miss_threshold <= best_sim < self._threshold:
+            return [
+                NearMiss(
+                    rule_id=self.id,
+                    message=(
+                        f"Near-miss: semantic similarity {best_sim:.3f} is within "
+                        f"{self._threshold - best_sim:.3f} of threshold {self._threshold} "
+                        f"(category: {filtered_cats[idx]})"
+                    ),
+                    score=round(best_sim, 4),
+                    meta={
+                        "similarity": round(best_sim, 4),
+                        "threshold": self._threshold,
+                        "near_miss_threshold": self._near_miss_threshold,
+                        "category": filtered_cats[idx],
+                        "nearest_centroid": filtered_texts[idx],
+                        "model": self._model,
+                        "centroids": self._centroids,
+                        "centroids_hash": centroids_hash,
+                    },
+                )
+            ]
+        return []

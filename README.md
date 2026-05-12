@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/pypi-v0.3.0-orange?style=flat-square" />
+  <img src="https://img.shields.io/badge/pypi-v0.3.3-orange?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
   <img src="https://img.shields.io/badge/mypy-strict-success?style=flat-square" />
   <img src="https://img.shields.io/badge/lint-ruff-blueviolet?style=flat-square" />
@@ -34,30 +34,36 @@ Most guardrail tools operate on LLM outputs inside chat interfaces.
 **NeuroSym covers the full pipeline** — from raw voice transcriptions and untrusted inputs,
 through structured execution plans, to the actions an agent takes on your system.
 
-|                                        | NeMo Guardrails | Guardrails AI | **NeuroSym-AI** |
-| -------------------------------------- | --------------- | ------------- | --------------- |
-| No API keys required                   | ✗               | ✗             | ✅              |
-| Voice / input-side injection detection | ✗               | ✗             | ✅              |
-| **Output-side guards (secret leakage)** | ✗              | ✗             | ✅ **new**      |
-| **Streaming guard (mid-token abort)**  | ✗               | ✗             | ✅ **new**      |
-| Action-graph policy validation         | ✗               | ✗             | ✅              |
-| Deterministic offline mode             | partial         | partial       | ✅              |
-| Composite policy algebra               | ✗               | ✗             | ✅              |
-| SAT/SMT formal policy linter           | ✗               | ✗             | ✅              |
-| Built-in adversarial benchmark         | ✗               | ✗             | ✅              |
-| Full structured audit trace            | ✗               | partial       | ✅              |
-| `py.typed` (mypy/pyright ready)        | ✗               | ✗             | ✅ **new**      |
+|                                                              | NeMo Guardrails | Guardrails AI | **NeuroSym-AI** |
+| ------------------------------------------------------------ | --------------- | ------------- | --------------- |
+| No API keys required                                         | ✗               | ✗             | ✅              |
+| Voice / input-side injection detection                       | ✗               | ✗             | ✅              |
+| Output-side guards (secret leakage)                          | ✗               | ✗             | ✅              |
+| Streaming guard (mid-token abort)                            | ✗               | ✗             | ✅              |
+| **Topic-based harm detection (CBRN, malware, self-harm)**    | ✗               | ✗             | ✅ **new**      |
+| **Semantic injection detection (embedding fallback)**        | ✗               | ✗             | ✅ **new**      |
+| Action-graph policy validation                               | ✗               | ✗             | ✅              |
+| Deterministic offline mode                                   | partial         | partial       | ✅              |
+| Composite policy algebra                                     | ✗               | ✗             | ✅              |
+| SAT/SMT formal policy linter                                 | ✗               | ✗             | ✅              |
+| Built-in adversarial benchmark                               | ✗               | ✗             | ✅              |
+| Full structured audit trace                                  | ✗               | partial       | ✅              |
+| `py.typed` (mypy/pyright ready)                              | ✗               | ✗             | ✅              |
 
 ---
 
 ## Installation
 
 ```bash
-pip install neurosym-ai
+pip install neurosym-ai                    # core rules — no extra deps required
 
 # Optional extras
-pip install neurosym-ai[z3]          # SMT / formal constraints
-pip install neurosym-ai[providers]   # Gemini / OpenAI LLM adapters
+pip install neurosym-ai[embeddings]        # SemanticInjectionRule (sentence-transformers + numpy)
+pip install neurosym-ai[z3]               # SAT/SMT formal policy constraints
+pip install neurosym-ai[cli]              # neurosym CLI (Typer + Rich)
+pip install neurosym-ai[llm]              # LLM repair loops and provider adapters
+pip install neurosym-ai[providers]        # Gemini / OpenAI cloud adapters
+pip install neurosym-ai[all]              # everything above
 ```
 
 ---
@@ -205,17 +211,19 @@ Guard(rules=[...], deny_above="high")  # auto-block high + critical
 
 ### Rule Types
 
-| Rule                                   | Side   | Use for                                                |
-| -------------------------------------- | ------ | ------------------------------------------------------ |
-| `PromptInjectionRule`                  | Input  | Detect adversarial inputs (9 preset attack categories) |
-| `SecretLeakageRule`                    | **Output** | Block AWS keys, JWTs, tokens, private keys in LLM responses |
-| `SystemPromptRegurgitationRule`        | **Output** | Detect verbatim system-prompt echo in output           |
-| `ActionPolicyRule`                     | Input  | Validate structured agent action plans                 |
-| `RegexRule`                            | Either | Pattern-based text validation                          |
-| `SchemaRule`                           | Either | JSON Schema enforcement                                |
-| `PythonPredicateRule`                  | Either | Arbitrary Python predicate                             |
-| `DenyIfContains`                       | Either | Banned substring detection                             |
-| `AllOf` / `AnyOf` / `Not` / `Implies` | Either | Boolean policy composition                             |
+| Rule                                   | Side       | Use for                                                                         |
+| -------------------------------------- | ---------- | ------------------------------------------------------------------------------- |
+| `PromptInjectionRule`                  | Input      | Detect adversarial inputs (9 preset attack categories)                          |
+| `BanTopicsRule`                        | Input      | Block dangerous subject-matter requests (CBRN, drugs, self-harm, malware)       |
+| `SemanticInjectionRule`                | Input      | Embedding-based fallback; catches injection paraphrases that bypass regex       |
+| `SecretLeakageRule`                    | **Output** | Block AWS keys, JWTs, tokens, private keys in LLM responses                     |
+| `SystemPromptRegurgitationRule`        | **Output** | Detect verbatim system-prompt echo in output                                    |
+| `ActionPolicyRule`                     | Input      | Validate structured agent action plans                                          |
+| `RegexRule`                            | Either     | Pattern-based text validation                                                   |
+| `SchemaRule`                           | Either     | JSON Schema enforcement                                                         |
+| `PythonPredicateRule`                  | Either     | Arbitrary Python predicate                                                      |
+| `DenyIfContains`                       | Either     | Banned substring detection                                                      |
+| `AllOf` / `AnyOf` / `Not` / `Implies` | Either     | Boolean policy composition                                                      |
 
 ---
 
@@ -238,6 +246,56 @@ print(PromptInjectionRule.available_presets())
 # ['delimiter_injection', 'exfiltration', 'ignore_instructions', 'indirect_injection',
 #  'obfuscation', 'path_traversal', 'role_switch', 'system_commands', 'system_prompt_extraction']
 ```
+
+---
+
+## BanTopicsRule — Harm Topic Filtering
+
+Unlike injection detectors (which detect *how* inputs try to manipulate), `BanTopicsRule` detects
+*what* is being requested — catching clinically or academically worded synthesis requests that
+score near 0.0 on tone and injection models.
+
+```python
+from neurosym import BanTopicsRule
+
+# All presets enabled by default
+rule = BanTopicsRule()
+
+# Specific presets only
+rule = BanTopicsRule(presets=["cbrn_weapons", "malware_exploit"])
+
+# Add custom patterns on top of the built-in presets
+rule = BanTopicsRule(extra_patterns=[r"\bmy_restricted_topic\b"])
+
+# Inspect available presets
+print(BanTopicsRule.available_presets())
+# ['cbrn_weapons', 'drug_synthesis', 'self_harm_methods', 'malware_exploit']
+```
+
+Patterns are bidirectional — `"synthesize TATP"` and `"TATP synthesis"` both fire. Negative
+lookaheads suppress false positives on defensive-security queries
+(`"build ransomware detection signatures"` passes). Input is canonicalized before matching:
+zero-width separators, Cyrillic/Greek visual homoglyphs, and spaced-letter obfuscation
+(`s y n t h e s i z e`) are all neutralized.
+
+---
+
+## SemanticInjectionRule — Embedding-Based Fallback
+
+Catches paraphrase-based injection attacks that bypass the regex layer. Requires `[embeddings]`.
+
+```python
+from neurosym import Guard, PromptInjectionRule, SemanticInjectionRule
+
+guard = Guard(rules=[
+    PromptInjectionRule(),         # fast regex pass — sub-millisecond
+    SemanticInjectionRule(),       # semantic fallback — catches paraphrases (~20 ms)
+], deny_above="high")
+```
+
+The `tail_fraction=0.25` default evaluates the last 25% of the input independently alongside
+the full text, catching attacks where a long innocent preamble dilutes the full-text similarity
+score below threshold.
 
 ---
 

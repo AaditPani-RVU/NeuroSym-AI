@@ -15,6 +15,7 @@ from .rules.action_policy import (
 from .rules.adversarial import PromptInjectionRule
 from .rules.base import BaseRule, Rule, Severity, StreamingRule, Violation, rule, severity_gte
 from .rules.composite import AllOf, AnyOf, Implies, Not
+from .rules.harm import BanTopicsRule
 from .rules.output import SecretLeakageRule, SystemPromptRegurgitationRule
 from .rules.semantic import SemanticInjectionRule
 from .version import __version__
@@ -38,6 +39,7 @@ __all__ = [
     # Adversarial
     "PromptInjectionRule",
     "SemanticInjectionRule",
+    "BanTopicsRule",
     # Output guards
     "SecretLeakageRule",
     "SystemPromptRegurgitationRule",

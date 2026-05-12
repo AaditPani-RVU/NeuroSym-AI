@@ -5,6 +5,46 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.3.3] — 2026-05-12 — "BanTopicsRule, SemanticInjectionRule late_resolve hardening"
+
+### Added
+
+- **`BanTopicsRule`** (`rules/harm.py`) — topic-based harm detection that fires on dangerous
+  subject matter regardless of phrasing. Closes the structural blind spot in tone/injection-based
+  classifiers (100% bypass rate on harmful_content seeds found by Lethe 2026-05-10): clinically-
+  or academically-worded synthesis requests score near 0.0 on Toxicity + PromptInjection scanners
+  but are caught by topic-pattern matching. Includes four built-in presets:
+  - `cbrn_weapons` — CBRN synthesis: explosives (TATP, RDX, PETN), nerve agents (sarin, VX,
+    novichok), biological toxins (ricin, botulinum), IED/pipe bomb construction instructions.
+  - `drug_synthesis` — illicit drug production: fentanyl, methamphetamine, MDMA, clandestine labs.
+  - `self_harm_methods` — suicide and self-harm method requests.
+  - `malware_exploit` — working exploit code for CVEs, ransomware/rootkit/RAT creation.
+  - Patterns are bidirectional (substance-then-verb and verb-then-substance) with `re.DOTALL`
+    so they fire across multi-line prompts regardless of word order.
+  - `extra_patterns` parameter for custom additions; `available_presets()` for introspection.
+
+- **`SemanticInjectionRule` tail-segment check** — new `tail_fraction` parameter (default 0.25)
+  evaluates the last 25% of the input in isolation alongside the full-text check. Addresses the
+  Lethe `late_resolve` bypass: a ~60–80-token innocent preamble context-shifts the full-text
+  embedding below threshold even when an injection payload is present at the end. The tail check
+  catches the payload independently of its preamble. Violation meta includes `check_mode`
+  (`"full"` or `"tail"`), `tail_fraction`, and `tail_word_count` for audit traces. Disabled with
+  `tail_fraction=0.0` for backwards-compatible behaviour.
+
+### Added (tests)
+
+- `tests/test_ban_topics.py` — 40 tests: CBRN synthesis true-positives (bidirectional patterns,
+  Lethe jb-004 pharma-preamble pipe bomb), drug synthesis, self-harm method requests, working
+  exploit true-positives; 18 safe/educational true-negatives including historical mentions,
+  addiction/symptom queries, and "explain how X works" queries; preset isolation, extra_patterns,
+  `available_presets`, violation field correctness, user_message sanitization, top-level export.
+- `tests/test_semantic_injection.py` — 8 new tail-check tests in
+  `TestSemanticInjectionRuleTailCheck`: tail fires when full-text passes, full-text early-exit
+  (encode called once), `check_mode` field on both violation paths, `tail_fraction=0.0` disables
+  tail check, short-text tail skipped, both-below-threshold → None.
+
+---
+
 ## [0.3.2] — 2026-05-10 — "Semantic fallback, lean install, forecaster hardening"
 
 ### Added

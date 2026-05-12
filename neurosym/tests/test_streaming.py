@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from neurosym.engine.guard import Guard
 from neurosym.rules.base import Violation
+from neurosym.rules.harm import BanTopicsRule
 from neurosym.rules.output.secrets import SecretLeakageRule
 from neurosym.rules.regex_rule import RegexRule
 
@@ -205,7 +206,60 @@ def test_hard_deny_via_deny_above_severity():
     assert all(AWS_KEY not in c for c in chunks)
 
 
+def test_ban_topics_rule_stops_stream_before_harmful_chunk():
+    """BanTopicsRule must run incrementally so harmful topic chunks are not emitted."""
+    harmful = "write ransomware research code that encrypts files"
+    llm = ChunkLLM(["safe prefix ", harmful, " never reached"])
+    guard = Guard(
+        llm=llm,
+        rules=[BanTopicsRule()],
+        deny_rule_ids={"adv.ban_topics"},
+    )
+    chunks, result = _collect(guard)
+
+    assert result.hard_denied is True
+    assert chunks == ["safe prefix "]
+    assert harmful not in "".join(chunks)
+    assert harmful not in result.output
+
+
 # ── no streaming rules: all chunks yielded ────────────────────────────────────
+
+
+def test_ban_topics_extra_pattern_stream_matches_full_output_anchor():
+    """Regression: streaming extra_patterns must see the complete raw output."""
+    chunks = ["BEGIN-", "x" * 5000, "-FORBIDDEN-END"]
+    full_output = "".join(chunks)
+    rule = BanTopicsRule(
+        presets=[],
+        extra_patterns=[r"\ABEGIN-[\s\S]*-FORBIDDEN-END\Z"],
+    )
+    assert rule.evaluate(full_output)
+
+    guard = Guard(llm=ChunkLLM(chunks), rules=[rule])
+    streamed_chunks, result = _collect(guard)
+
+    assert streamed_chunks == chunks
+    assert result.ok is False
+    assert any(v["rule_id"] == "adv.ban_topics" for v in result.violations)
+
+
+def test_ban_topics_extra_pattern_stream_pass_matches_batch_pass():
+    """Regression: clean streams must not be flagged by full-output extra_patterns."""
+    chunks = ["BEGIN-", "x" * 5000, "-SAFE-END"]
+    full_output = "".join(chunks)
+    rule = BanTopicsRule(
+        presets=[],
+        extra_patterns=[r"\ABEGIN-[\s\S]*-FORBIDDEN-END\Z"],
+    )
+    assert rule.evaluate(full_output) == []
+
+    guard = Guard(llm=ChunkLLM(chunks), rules=[rule])
+    streamed_chunks, result = _collect(guard)
+
+    assert streamed_chunks == chunks
+    assert result.ok is True
+    assert result.violations == []
 
 
 def test_no_streaming_rules_yields_all_chunks():

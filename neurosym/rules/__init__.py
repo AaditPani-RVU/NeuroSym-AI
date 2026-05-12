@@ -10,6 +10,7 @@ from .action_policy import (
 from .adversarial import PromptInjectionRule
 from .base import BaseRule, Rule, Severity, Violation, rule, severity_gte
 from .composite import AllOf, AnyOf, Implies, Not
+from .harm import BanTopicsRule
 from .python_pred_rule import PythonPredicateRule
 from .regex_rule import RegexRule
 from .schema_rule import SchemaRule
@@ -28,6 +29,7 @@ __all__ = [
     "PythonPredicateRule",
     # Adversarial
     "PromptInjectionRule",
+    "BanTopicsRule",
     # Action policy
     "ActionPolicyRule",
     "DESTRUCTIVE_ACTIONS",

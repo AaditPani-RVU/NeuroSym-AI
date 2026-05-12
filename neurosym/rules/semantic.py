@@ -24,6 +24,7 @@ _CENTROIDS_DIR = Path(__file__).parent / "centroids"
 _DEFAULT_CENTROIDS = "injection-centroids-v1"
 _DEFAULT_MODEL = "all-MiniLM-L6-v2"
 _DEFAULT_THRESHOLD = 0.75
+_TAIL_MIN_WORDS = 8  # minimum tail word count for a meaningful embedding
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +128,7 @@ class SemanticInjectionRule(BaseRule):
         threshold: float = _DEFAULT_THRESHOLD,
         severity: Severity = "high",
         categories: list[str] | None = None,
+        tail_fraction: float = 0.25,
     ) -> None:
         self.id = id
         self._model = model
@@ -136,6 +138,10 @@ class SemanticInjectionRule(BaseRule):
         self._filter_cats: frozenset[str] | None = (
             frozenset(categories) if categories is not None else None
         )
+        # Lethe late_resolve hardening: also evaluate the last tail_fraction of
+        # the text in isolation — catches injection payloads buried after a long
+        # innocuous preamble that dilutes the full-text embedding below threshold.
+        self._tail_fraction = max(0.0, min(1.0, float(tail_fraction)))
 
     def check(self, output: Any) -> Violation | None:
         import numpy as np  # type: ignore[import]
@@ -161,29 +167,77 @@ class SemanticInjectionRule(BaseRule):
             filtered_cats = all_cats
             filtered_texts = all_texts
 
-        input_emb = encoder.encode([text], normalize_embeddings=True, show_progress_bar=False)[0]
-        sims = centroid_matrix @ input_emb
-        best_idx = int(np.argmax(sims))
-        best_sim = float(sims[best_idx])
+        def _score(emb: Any) -> tuple[float, int]:
+            sims = centroid_matrix @ emb
+            idx = int(np.argmax(sims))
+            return float(sims[idx]), idx
 
-        if best_sim < self._threshold:
-            return None
+        # Determine tail segment upfront so we can batch both in one encode call.
+        # A long innocent preamble (~60-80 tokens) can dilute the full-text embedding
+        # enough to push similarity below threshold even when an injection payload is
+        # present at the end — the tail check catches this (Lethe late_resolve finding).
+        tail: str | None = None
+        tail_word_count = 0
+        if self._tail_fraction > 0:
+            words = text.split()
+            tail_start = int(len(words) * (1 - self._tail_fraction))
+            tail_words = words[tail_start:]
+            if len(tail_words) >= _TAIL_MIN_WORDS:
+                tail = " ".join(tail_words)
+                tail_word_count = len(tail_words)
 
-        return Violation(
-            rule_id=self.id,
-            message=(
-                f"Semantic similarity {best_sim:.3f} >= {self._threshold} "
-                f"(category: {filtered_cats[best_idx]})"
-            ),
-            severity=self._severity,
-            meta={
-                "similarity": round(best_sim, 4),
-                "threshold": self._threshold,
-                "category": filtered_cats[best_idx],
-                "nearest_centroid": filtered_texts[best_idx],
-                "model": self._model,
-                "centroids": self._centroids,
-                "centroids_hash": centroids_hash,
-            },
-            user_message="Input was blocked: potentially unsafe content detected.",
-        )
+        # Single batched encode call: avoids double inference cost on long benign
+        # inputs that don't trip the full-text threshold.
+        segments = [text] if tail is None else [text, tail]
+        embeddings = encoder.encode(segments, normalize_embeddings=True, show_progress_bar=False)
+
+        # Full-text check
+        best_sim, best_idx = _score(embeddings[0])
+        if best_sim >= self._threshold:
+            return Violation(
+                rule_id=self.id,
+                message=(
+                    f"Semantic similarity {best_sim:.3f} >= {self._threshold} "
+                    f"(category: {filtered_cats[best_idx]})"
+                ),
+                severity=self._severity,
+                meta={
+                    "similarity": round(best_sim, 4),
+                    "threshold": self._threshold,
+                    "category": filtered_cats[best_idx],
+                    "nearest_centroid": filtered_texts[best_idx],
+                    "model": self._model,
+                    "centroids": self._centroids,
+                    "centroids_hash": centroids_hash,
+                    "check_mode": "full",
+                },
+                user_message="Input was blocked: potentially unsafe content detected.",
+            )
+
+        # Tail check (embedding already computed in the batch above)
+        if tail is not None:
+            tail_sim, tail_idx = _score(embeddings[1])
+            if tail_sim >= self._threshold:
+                return Violation(
+                    rule_id=self.id,
+                    message=(
+                        f"Tail-segment semantic similarity {tail_sim:.3f} >= {self._threshold} "
+                        f"(category: {filtered_cats[tail_idx]})"
+                    ),
+                    severity=self._severity,
+                    meta={
+                        "similarity": round(tail_sim, 4),
+                        "threshold": self._threshold,
+                        "category": filtered_cats[tail_idx],
+                        "nearest_centroid": filtered_texts[tail_idx],
+                        "model": self._model,
+                        "centroids": self._centroids,
+                        "centroids_hash": centroids_hash,
+                        "check_mode": "tail",
+                        "tail_fraction": self._tail_fraction,
+                        "tail_word_count": tail_word_count,
+                    },
+                    user_message="Input was blocked: potentially unsafe content detected.",
+                )
+
+        return None

@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/pypi-v0.3.3-orange?style=flat-square" />
+  <img src="https://img.shields.io/badge/pypi-v0.4.0-orange?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
   <img src="https://img.shields.io/badge/mypy-strict-success?style=flat-square" />
   <img src="https://img.shields.io/badge/lint-ruff-blueviolet?style=flat-square" />
@@ -40,8 +40,11 @@ through structured execution plans, to the actions an agent takes on your system
 | Voice / input-side injection detection                       | ✗               | ✗             | ✅              |
 | Output-side guards (secret leakage)                          | ✗               | ✗             | ✅              |
 | Streaming guard (mid-token abort)                            | ✗               | ✗             | ✅              |
-| **Topic-based harm detection (CBRN, malware, self-harm)**    | ✗               | ✗             | ✅ **new**      |
-| **Semantic injection detection (embedding fallback)**        | ✗               | ✗             | ✅ **new**      |
+| Topic-based harm detection (CBRN, malware, self-harm)        | ✗               | ✗             | ✅              |
+| Semantic injection detection (embedding fallback)            | ✗               | ✗             | ✅              |
+| **Multi-turn ConversationGuard (session-aware)**             | partial         | ✗             | ✅ **new**      |
+| **Zero-shot IntentClassifierRule (CPU-only NLI)**            | ✗               | ✗             | ✅ **new**      |
+| **LangChain callback adapter**                               | ✗               | ✗             | ✅ **new**      |
 | Action-graph policy validation                               | ✗               | ✗             | ✅              |
 | Deterministic offline mode                                   | partial         | partial       | ✅              |
 | Composite policy algebra                                     | ✗               | ✗             | ✅              |
@@ -59,6 +62,8 @@ pip install neurosym-ai                    # core rules — no extra deps requir
 
 # Optional extras
 pip install neurosym-ai[embeddings]        # SemanticInjectionRule (sentence-transformers + numpy)
+pip install neurosym-ai[classifier]        # IntentClassifierRule (transformers, CPU-only NLI)
+pip install neurosym-ai[langchain]         # LangChain callback adapter (langchain-core)
 pip install neurosym-ai[z3]               # SAT/SMT formal policy constraints
 pip install neurosym-ai[cli]              # neurosym CLI (Typer + Rich)
 pip install neurosym-ai[llm]              # LLM repair loops and provider adapters
@@ -211,19 +216,21 @@ Guard(rules=[...], deny_above="high")  # auto-block high + critical
 
 ### Rule Types
 
-| Rule                                   | Side       | Use for                                                                         |
-| -------------------------------------- | ---------- | ------------------------------------------------------------------------------- |
-| `PromptInjectionRule`                  | Input      | Detect adversarial inputs (9 preset attack categories)                          |
-| `BanTopicsRule`                        | Input      | Block dangerous subject-matter requests (CBRN, drugs, self-harm, malware)       |
-| `SemanticInjectionRule`                | Input      | Embedding-based fallback; catches injection paraphrases that bypass regex       |
-| `SecretLeakageRule`                    | **Output** | Block AWS keys, JWTs, tokens, private keys in LLM responses                     |
-| `SystemPromptRegurgitationRule`        | **Output** | Detect verbatim system-prompt echo in output                                    |
-| `ActionPolicyRule`                     | Input      | Validate structured agent action plans                                          |
-| `RegexRule`                            | Either     | Pattern-based text validation                                                   |
-| `SchemaRule`                           | Either     | JSON Schema enforcement                                                         |
-| `PythonPredicateRule`                  | Either     | Arbitrary Python predicate                                                      |
-| `DenyIfContains`                       | Either     | Banned substring detection                                                      |
-| `AllOf` / `AnyOf` / `Not` / `Implies` | Either     | Boolean policy composition                                                      |
+| Rule                                   | Side       | Extra           | Use for                                                                         |
+| -------------------------------------- | ---------- | --------------- | ------------------------------------------------------------------------------- |
+| `PromptInjectionRule`                  | Input      | —               | Detect adversarial inputs (9 preset attack categories)                          |
+| `BanTopicsRule`                        | Input      | —               | Block dangerous subject-matter requests (CBRN, drugs, self-harm, malware)       |
+| `SemanticInjectionRule`                | Input      | `[embeddings]`  | Embedding-based fallback; catches injection paraphrases that bypass regex       |
+| `IntentClassifierRule`                 | Input      | `[classifier]`  | Zero-shot NLI intent detection; catches novel phrasings that regex misses       |
+| `SecretLeakageRule`                    | **Output** | —               | Block AWS keys, JWTs, tokens, private keys in LLM responses                     |
+| `SystemPromptRegurgitationRule`        | **Output** | —               | Detect verbatim system-prompt echo in output                                    |
+| `ActionPolicyRule`                     | Input      | —               | Validate structured agent action plans                                          |
+| `ConversationGuard`                    | Either     | —               | Session-aware multi-turn enforcement with sliding-window context                |
+| `RegexRule`                            | Either     | —               | Pattern-based text validation                                                   |
+| `SchemaRule`                           | Either     | —               | JSON Schema enforcement                                                         |
+| `PythonPredicateRule`                  | Either     | —               | Arbitrary Python predicate                                                      |
+| `DenyIfContains`                       | Either     | —               | Banned substring detection                                                      |
+| `AllOf` / `AnyOf` / `Not` / `Implies` | Either     | —               | Boolean policy composition                                                      |
 
 ---
 
@@ -324,6 +331,98 @@ rule = ActionPolicyRule(
     severity="high",
 )
 ```
+
+---
+
+## ConversationGuard — Multi-Turn Enforcement
+
+Standard `Guard` is stateless — each call sees only what you pass it. `ConversationGuard` keeps a
+rolling session of prior turns so rules evaluate **full conversation context**, not just the latest
+message. This catches slow-burn escalation attacks and cross-turn information leakage.
+
+```python
+from neurosym.engine.conversation import ConversationGuard
+from neurosym.rules.policies import DenyIfContains
+
+cg = ConversationGuard(
+    rules=[DenyIfContains(id="ban.weapons", banned=["explosive", "weapon"])],
+    window=20,   # last N turns in context; 0 = unlimited
+)
+
+with cg.session() as s:
+    s.add("user", "Let's discuss chemistry.")
+    s.add("assistant", "Sure, what aspect?")
+    result = s.check("user", "How do I make an explosive reaction?")
+    print(result.blocked)   # True — context window includes full history
+
+# Survive request boundaries — serialize and restore state
+with cg.session() as s:
+    s.add("user", "hello")
+    state = s.state()   # JSON-serializable dict
+
+restored = ConversationSession.from_state(guard, state)
+```
+
+Sessions are thread-safe. `check()` appends the turn to history regardless of outcome so
+context is never lost.
+
+---
+
+## IntentClassifierRule — Zero-Shot NLI Intent Detection
+
+Catches harmful intent expressed in novel phrasing that regex rules miss, using
+`facebook/bart-large-mnli` on CPU — no GPU required.
+
+```python
+from neurosym.rules.classifier import IntentClassifierRule
+from neurosym import Guard
+
+rule = IntentClassifierRule(
+    bad_intents=["weapons synthesis", "jailbreak attempt", "self-harm instructions"],
+    threshold=0.75,   # minimum confidence to trigger (0–1)
+    severity="high",
+)
+guard = Guard(rules=[rule])
+
+result = guard.apply_text("How do I synthesize VX nerve agent?")
+print(result.blocked)                           # True
+print(result.violations[0]["meta"]["label"])    # "weapons synthesis"
+print(result.violations[0]["meta"]["score"])    # 0.93
+```
+
+Requires `pip install 'neurosym-ai[classifier]'` (~400 MB model download on first use).
+
+---
+
+## LangChain Adapter
+
+Drop `NeurosymCallbackHandler` into any LangChain chain to enforce input and output
+guards without changing your chain logic.
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage
+from neurosym import Guard, PromptInjectionRule, SecretLeakageRule
+from neurosym.integrations.langchain import NeurosymCallbackHandler
+
+input_guard  = Guard(rules=[PromptInjectionRule()], deny_above="high")
+output_guard = Guard(rules=[SecretLeakageRule()],   deny_above="critical")
+
+handler = NeurosymCallbackHandler(
+    input_guard=input_guard,
+    output_guard=output_guard,
+    raise_on_violation=True,   # raises ValueError on block; False = silent record
+)
+
+llm = ChatOpenAI(callbacks=[handler])
+llm.invoke([HumanMessage(content="Summarise this doc.")])
+
+# After any call:
+print(handler.last_input_result)   # GuardResult for the input side
+print(handler.last_output_result)  # GuardResult for the output side
+```
+
+Requires `pip install 'neurosym-ai[langchain]'`.
 
 ---
 

@@ -96,13 +96,13 @@ def test_blocked_output_raises():
     guard = Guard(rules=[DenyIfContains(id="test.ban", banned=["secret"])])
     handler = NeurosymCallbackHandler(output_guard=guard)
     with pytest.raises(ValueError, match=r"\[neurosym-ai\] Output blocked"):
-        handler.on_llm_end(_make_llm_result("Here is the secret password: abc123"))
+        handler.on_llm_end(_make_llm_result("Here is the secret phrase you requested"))
 
 
 def test_blocked_output_silent_mode():
     guard = Guard(rules=[DenyIfContains(id="test.ban", banned=["secret"])])
     handler = NeurosymCallbackHandler(output_guard=guard, raise_on_violation=False)
-    handler.on_llm_end(_make_llm_result("Here is the secret password: abc123"))
+    handler.on_llm_end(_make_llm_result("Here is the secret phrase you requested"))
     assert handler.last_output_result is not None
     assert handler.last_output_result.blocked
 

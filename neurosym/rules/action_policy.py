@@ -193,7 +193,8 @@ def no_path_outside_sandbox(
 
     def _is_safe_path(p: str) -> bool:
         norm = os.path.normcase(os.path.abspath(p))
-        return any(norm.startswith(root) for root in normalized_roots)
+        # Use os.sep suffix so "/sandbox" doesn't pass "/sandbox_evil/..."
+        return any(norm == root or norm.startswith(root + os.sep) for root in normalized_roots)
 
     def _policy(plan: Any) -> bool:
         if not isinstance(plan, dict):

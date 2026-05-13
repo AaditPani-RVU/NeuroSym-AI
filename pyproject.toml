@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurosym-ai"
-version = "0.3.4"
+version = "0.4.0"
 description = "Neuro-symbolic guardrails for LLMs — injection detection, harm filters, output guards, streaming safety, and action-plan validation."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -57,6 +57,17 @@ embeddings = [
 # SMT / constraint solving (lint())
 z3 = ["z3-solver>=4.12"]
 
+# Zero-shot NLI intent classifier (IntentClassifierRule)
+classifier = [
+  "transformers>=4.40",
+  "torch>=2.1",
+]
+
+# LangChain integration (NeurosymCallbackHandler)
+langchain = [
+  "langchain-core>=0.2",
+]
+
 # Cloud provider SDKs (GeminiLLM)
 providers = [
   "google-generativeai>=0.7.2",
@@ -71,6 +82,8 @@ all = [
   "neurosym-ai[embeddings]",
   "neurosym-ai[z3]",
   "neurosym-ai[providers]",
+  "neurosym-ai[classifier]",
+  "neurosym-ai[langchain]",
 ]
 
 dev = [
@@ -185,6 +198,26 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = [
   "neurosym.llm.fallback",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+  "transformers",
+  "transformers.*",
+  "torch",
+  "torch.*",
+  "langchain_core",
+  "langchain_core.*",
+  "langchain",
+  "langchain.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+  "neurosym.rules.classifier",
+  "neurosym.integrations.langchain",
 ]
 ignore_errors = true
 

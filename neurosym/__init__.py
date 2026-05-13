@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .agents.impact_forecaster.impact_exceptions import ImpactForecastUnavailable
+from .engine.conversation import ConversationGuard, ConversationSession
 from .engine.guard import Artifact, Guard, GuardResult
 from .policy import LintIssue, lint
 from .rules.action_policy import (
@@ -24,9 +25,14 @@ from .rules.base import (
     rule,
     severity_gte,
 )
+from .rules.classifier import IntentClassifierRule
 from .rules.composite import AllOf, AnyOf, Implies, Not
 from .rules.harm import BanTopicsRule
 from .rules.output import SecretLeakageRule, SystemPromptRegurgitationRule
+from .rules.policies import DenyIfContains
+from .rules.python_pred_rule import PythonPredicateRule
+from .rules.regex_rule import RegexRule
+from .rules.schema_rule import SchemaRule
 from .rules.semantic import SemanticInjectionRule
 from .version import __version__
 
@@ -35,6 +41,8 @@ __all__ = [
     "Artifact",
     "Guard",
     "GuardResult",
+    "ConversationGuard",
+    "ConversationSession",
     # Policy linter
     "lint",
     "LintIssue",
@@ -52,6 +60,12 @@ __all__ = [
     "PromptInjectionRule",
     "SemanticInjectionRule",
     "BanTopicsRule",
+    "IntentClassifierRule",
+    # Core rules (commonly used directly)
+    "RegexRule",
+    "SchemaRule",
+    "DenyIfContains",
+    "PythonPredicateRule",
     # Output guards
     "SecretLeakageRule",
     "SystemPromptRegurgitationRule",

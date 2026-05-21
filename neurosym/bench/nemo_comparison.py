@@ -139,7 +139,7 @@ def _bench_neurosym() -> BenchResult:
     install_kb = _install_size_kb("neurosym-ai")
 
     return BenchResult(
-        name="neurosym-ai v0.4.2",
+        name="neurosym-ai v0.4.3",
         cold_start_ms=round(cold_ms, 2),
         p50_latency_us=round(p50, 2),
         p99_latency_us=round(p99, 2),

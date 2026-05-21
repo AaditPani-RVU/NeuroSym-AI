@@ -5,6 +5,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.3] — 2026-05-22 — "Role-aware conversation artifacts"
+
+### Added
+
+- **`ConversationRule` protocol** (`neurosym.engine.conversation`) — `@runtime_checkable`
+  protocol with a single method `evaluate_turns(turns: list[Turn]) -> list[Violation]`.
+  Rules implementing `ConversationRule` receive structured turn objects with per-turn
+  `role` and `content` instead of a flat text window. This enables role-filtered checks
+  (user-only, assistant-only), turn-ordering logic, and per-turn metadata access.
+
+- **Rule routing in `ConversationGuard`** — `__init__` now accepts
+  `list[Rule | ConversationRule]`. At construction time rules are split:
+  - `ConversationRule` implementors → `evaluate_turns()` path
+  - Plain `Rule` implementors → existing flat-text `Guard` path
+  - Rules implementing **both** → `evaluate_turns()` path only (no double-evaluation)
+
+- **`ConversationSession._apply_conv_rules()`** — internal helper that runs all
+  `ConversationRule` rules and merges violations into the `GuardResult` in-place.
+  Called from both `check()` and `acheck()`.
+
+- **`ConversationSession.from_state()` updated** — accepts an optional `conv_rules`
+  parameter so restored sessions carry their conversation rules through.
+
+- **Top-level exports** — `ConversationRule` and `Turn` are now exported from
+  `neurosym` (previously required knowing the submodule path).
+
+### Added (tests)
+
+- `tests/test_conversation_rule.py` — 13 tests: protocol runtime-checkability,
+  `evaluate_turns` receives `list[Turn]` not flat text, window respected, role
+  filtering (user-only fires/ignores assistant turns), violation merging, text+conv
+  rule co-existence, dual-protocol rule uses `evaluate_turns` exclusively,
+  `acheck` runs conv rules, `from_state` preserves conv_rules, export contract.
+
+---
+
 ## [0.4.2] — 2026-05-21 — "Async ConversationGuard"
 
 ### Added

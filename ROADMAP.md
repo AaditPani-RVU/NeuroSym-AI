@@ -48,11 +48,11 @@ Bugs caught post-ship that undermine credibility:
 
 **Why here:** `Guard` already has a full async API (`aapply`, `aapply_text`, `agenerate`). `ConversationGuard` being sync-only is an asymmetry that blocks async web frameworks from using it. This is a completion item, not a new feature.
 
-### 0.4.3 — Role-aware conversation artifacts
+### 0.4.3 — Role-aware conversation artifacts ✅
 
-- [ ] `ConversationSession._build_context()` currently concatenates turns as `[role] content\n` strings. Add an optional structured artifact path: rules that want to inspect individual turns by role can receive a `list[Turn]` instead of flat text
-- [ ] Keep flat text as the default — all existing rules continue working unchanged
-- [ ] New `ConversationRule` protocol: `evaluate_turns(turns: list[Turn]) -> list[Violation]` — opt-in, does not break `Rule`
+- [x] `ConversationSession._build_context()` currently concatenates turns as `[role] content\n` strings. Add an optional structured artifact path: rules that want to inspect individual turns by role can receive a `list[Turn]` instead of flat text
+- [x] Keep flat text as the default — all existing rules continue working unchanged
+- [x] New `ConversationRule` protocol: `evaluate_turns(turns: list[Turn]) -> list[Violation]` — opt-in, does not break `Rule`
 
 **Why here, not 0.5:** `ConversationGuard` is the v0.4 anchor. Role-aware access is a natural extension of it that unblocks rule authors who need to distinguish who said what. Deferring it to v0.5 risks having the protocol baked in wrong once the DSL is designed. Better to ship it early and let it stabilise.
 

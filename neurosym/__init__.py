@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .agents.impact_forecaster.impact_exceptions import ImpactForecastUnavailable
-from .engine.conversation import ConversationGuard, ConversationSession
+from .engine.conversation import ConversationGuard, ConversationRule, ConversationSession, Turn
 from .engine.guard import Artifact, Guard, GuardResult
 from .policy import LintIssue, lint
 from .rules.action_policy import (
@@ -43,6 +43,8 @@ __all__ = [
     "GuardResult",
     "ConversationGuard",
     "ConversationSession",
+    "ConversationRule",
+    "Turn",
     # Policy linter
     "lint",
     "LintIssue",

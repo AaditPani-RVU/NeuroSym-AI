@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.2] — 2026-05-21 — "Async ConversationGuard"
+
+### Added
+
+- **`ConversationSession.acheck(role, content)`** — async version of `check()`, delegates
+  to `Guard.aapply_text()` so the event loop is never blocked. The `asyncio.Lock` is held
+  only during the brief history snapshot and append steps, never across the `await`.
+- **`ConversationSession.aadd(role, content)`** — async version of `add()`.
+- **`ConversationGuard.asession()`** — `@asynccontextmanager` yielding a
+  `ConversationSession`. Drop-in for `session()` in async web frameworks (FastAPI, Starlette,
+  aiohttp). Supports `restore_state=` for cross-request session continuity.
+- **Dual locking model** — `threading.Lock` for sync callers (unchanged), `asyncio.Lock`
+  for async callers. Neither lock is held across an `await`, so concurrent `acheck` calls
+  on the same session are safe without blocking the event loop.
+
+### Added (tests)
+
+- `tests/test_conversation_async.py` — 10 tests: `acheck` clean/blocked, history
+  accumulation on violation, multi-turn context via `aadd`, `asession` restore_state,
+  20-concurrent `acheck` within one session, 3 independent concurrent sessions,
+  interleaved `aadd`/`acheck` ordering.
+
+---
+
 ## [0.4.1] — 2026-05-21 — "Release integrity"
 
 ### Fixed

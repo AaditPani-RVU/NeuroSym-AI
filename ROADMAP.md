@@ -40,11 +40,11 @@ Bugs caught post-ship that undermine credibility:
 - [x] `NeurosymCallbackHandler` does not inherit from `BaseCallbackHandler` — current tests use a fake base class, so real LangChain registration is untested. Fix: lazy-inherit via a module-level factory so the class is properly registered in LangChain's callback system
 - [x] `BENCHMARKS.md` bench script (`nemo_comparison.py`) still embeds aggressive NeMo assumptions in reference comments — align with the more careful prose
 
-### 0.4.2 — Async ConversationGuard
+### 0.4.2 — Async ConversationGuard ✅
 
-- [ ] `ConversationSession.acheck(role, content)` using the existing `Guard.aapply_text()` async path
-- [ ] Async-safe locking model: replace `threading.Lock` with a strategy that works correctly under both sync and async callers (asyncio lock inside async methods, threading lock for sync)
-- [ ] Tests for concurrent async sessions
+- [x] `ConversationSession.acheck(role, content)` using the existing `Guard.aapply_text()` async path
+- [x] Async-safe locking model: replace `threading.Lock` with a strategy that works correctly under both sync and async callers (asyncio lock inside async methods, threading lock for sync)
+- [x] Tests for concurrent async sessions
 
 **Why here:** `Guard` already has a full async API (`aapply`, `aapply_text`, `agenerate`). `ConversationGuard` being sync-only is an asymmetry that blocks async web frameworks from using it. This is a completion item, not a new feature.
 

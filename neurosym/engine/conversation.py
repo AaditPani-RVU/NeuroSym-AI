@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import threading
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass
 from typing import Any
 
@@ -44,7 +45,8 @@ class ConversationSession:
         self._guard = guard
         self._window = window
         self._history: list[Turn] = list(history or [])
-        self._lock = threading.Lock()
+        self._lock = threading.Lock()  # sync callers
+        self._alock = asyncio.Lock()  # async callers
 
     # ------------------------------------------------------------------ #
     # Public API                                                           #
@@ -70,6 +72,30 @@ class ConversationSession:
         context = self._build_context(new_turn)
         result = self._guard.apply_text(context)
         with self._lock:
+            self._history.append(new_turn)
+        return result
+
+    async def aadd(self, role: str, content: str) -> None:
+        """Async version of :meth:`add` — record a turn without evaluating it."""
+        async with self._alock:
+            self._history.append(Turn(role=role, content=content))
+
+    async def acheck(self, role: str, content: str) -> GuardResult:
+        """
+        Async version of :meth:`check` — evaluate a new turn against the conversation window.
+
+        Uses :meth:`~neurosym.engine.guard.Guard.aapply_text` so the event loop
+        is never blocked. The asyncio lock is only held during the brief history
+        snapshot and append steps — never across the await.
+        """
+        new_turn = Turn(role=role, content=content)
+        # Snapshot history while holding the async lock (non-blocking list slice)
+        async with self._alock:
+            prior = self._history[-self._window :] if self._window > 0 else list(self._history)
+        context = "\n".join(f"[{t.role}] {t.content}" for t in prior + [new_turn])
+        # Evaluate — lock is NOT held during the await
+        result = await self._guard.aapply_text(context)
+        async with self._alock:
             self._history.append(new_turn)
         return result
 
@@ -156,6 +182,29 @@ class ConversationGuard:
 
             with cg.session() as s:
                 result = s.check("user", "hello")
+        """
+        if restore_state is not None:
+            sess = ConversationSession.from_state(self._guard, restore_state)
+        else:
+            sess = ConversationSession(guard=self._guard, window=self._window)
+        yield sess
+
+    @contextlib.asynccontextmanager
+    async def asession(
+        self,
+        *,
+        restore_state: dict[str, Any] | None = None,
+    ) -> AsyncGenerator[ConversationSession, None]:
+        """
+        Async context manager yielding a :class:`ConversationSession`.
+
+        Use with ``async with cg.asession() as s:`` in async web frameworks.
+        The session uses :meth:`ConversationSession.acheck` /
+        :meth:`ConversationSession.aadd` for non-blocking evaluation.
+
+        Args:
+            restore_state: Optional dict from a previous
+                :meth:`ConversationSession.state` call.
         """
         if restore_state is not None:
             sess = ConversationSession.from_state(self._guard, restore_state)

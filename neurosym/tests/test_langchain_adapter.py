@@ -26,7 +26,7 @@ def _make_llm_result(text: str) -> MagicMock:
 
 
 def _install_fake_langchain_core() -> None:
-    """Inject a minimal fake langchain_core so the import succeeds."""
+    """Inject a minimal fake langchain_core and force a fresh import of the adapter."""
     if "langchain_core" in sys.modules:
         return
     lc = ModuleType("langchain_core")
@@ -39,6 +39,9 @@ def _install_fake_langchain_core() -> None:
     lc.callbacks = lc_cb  # type: ignore[attr-defined]
     sys.modules["langchain_core"] = lc
     sys.modules["langchain_core.callbacks"] = lc_cb
+
+    # Force the adapter to be re-evaluated so its factory picks up the fake base.
+    sys.modules.pop("neurosym.integrations.langchain", None)
 
 
 _install_fake_langchain_core()
@@ -158,3 +161,19 @@ def test_stub_callbacks_do_not_raise():
     handler.on_tool_start({}, "tool_input")
     handler.on_tool_end("tool_output")
     handler.on_tool_error(Exception("tool error"))
+
+
+# ------------------------------------------------------------------ #
+# Inheritance — LangChain registration correctness                     #
+# ------------------------------------------------------------------ #
+
+
+def test_handler_is_subclass_of_base_callback_handler():
+    """NeurosymCallbackHandler must be a real subclass so LangChain's isinstance checks pass."""
+    FakeBase = sys.modules["langchain_core"].callbacks.BaseCallbackHandler
+    assert issubclass(NeurosymCallbackHandler, FakeBase), (
+        "NeurosymCallbackHandler does not inherit from BaseCallbackHandler — "
+        "LangChain will reject it when passed to callbacks=[...]"
+    )
+    handler = NeurosymCallbackHandler()
+    assert isinstance(handler, FakeBase)

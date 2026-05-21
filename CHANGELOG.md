@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.1] — 2026-05-21 — "Release integrity"
+
+### Fixed
+
+- **`NeurosymCallbackHandler` inheritance** — the class now properly inherits from
+  `BaseCallbackHandler` via a module-level factory (`_make_handler_class`). Previously it
+  was a plain class with no LangChain parent, so LangChain's `isinstance` registration
+  checks silently failed. The factory captures the base at import time; if LangChain is
+  not installed, instantiation raises `ImportError` with an actionable install hint.
+- **`nemo_comparison.py` aggressive GPU claims** — source comment `[1]`, the NeMo result
+  `notes` field, the GPU table row, and the summary line all now reflect the accurate
+  nuance from `BENCHMARKS.md`: NeMo Guardrails does not require GPU for API-backed
+  deployments; GPU is relevant only for self-hosted local model serving.
+
+### Added (tests)
+
+- `test_handler_is_subclass_of_base_callback_handler` — verifies `issubclass` and
+  `isinstance` hold against the injected `BaseCallbackHandler`, confirming real LangChain
+  registration will work.
+
+---
+
 ## [0.3.4] — 2026-05-12 — "Near-miss reporting"
 
 ### Added

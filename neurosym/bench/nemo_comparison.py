@@ -139,7 +139,7 @@ def _bench_neurosym() -> BenchResult:
     install_kb = _install_size_kb("neurosym-ai")
 
     return BenchResult(
-        name="neurosym-ai v0.4.0",
+        name="neurosym-ai v0.4.1",
         cold_start_ms=round(cold_ms, 2),
         p50_latency_us=round(p50, 2),
         p99_latency_us=round(p99, 2),
@@ -155,8 +155,10 @@ def _bench_neurosym() -> BenchResult:
 # ------------------------------------------------------------------ #
 
 # Sources:
-#   [1] NeMo Guardrails GitHub README — system requirements state GPU recommended
+#   [1] NeMo Guardrails docs — GPU recommended for self-hosted local models;
+#       not required for API-backed deployments (OpenAI, Anthropic, etc.)
 #   [2] Colang 2.0 paper (arxiv 2310.10512) — latency figures for Colang rails
+#       with LLM-in-loop (OpenAI GPT-3.5); deterministic rails are much faster
 #   [3] pip show nemo-guardrails — install size measured on CI without CUDA
 #   [4] Community benchmarks (github.com/NVIDIA/NeMo-Guardrails/issues)
 
@@ -169,8 +171,8 @@ _NEMO_REFERENCE = BenchResult(
     install_kb=85_000,  # [3] nemo-guardrails wheel + Pydantic + langchain ≈ 85 MB
     notes=(
         "LLM (OpenAI GPT-3.5-turbo) required for Colang rails. "
-        "GPU VRAM not counted in RSS. "
-        "Cold-start includes LLM client init."
+        "GPU not required for API-backed deployments; relevant only for self-hosted local models. "
+        "Cold-start includes LLM client init and applies to local model loading."
     ),
     source="published",
 )
@@ -218,7 +220,8 @@ def _build_summary(ns: BenchResult, nemo: BenchResult) -> list[str]:
         f" ({ns.p50_latency_us:.1f} µs vs {nemo.p50_latency_us:,} µs)",
         f"Install size: neurosym-ai is {size_ratio:.0f}× smaller"
         f" ({ns.install_kb / 1024:.1f} MB vs {nemo.install_kb / 1024:.0f} MB)",
-        "GPU: neurosym-ai requires no GPU; NeMo Guardrails recommends GPU for production",
+        "GPU: neither library requires GPU for API-backed deployments."
+        " GPU is relevant only if you self-host a local model with NeMo.",
     ]
 
 
@@ -287,7 +290,7 @@ def _print_report(report: BenchReport, cg_lat: dict[str, float]) -> None:
             f"{report.nemo.peak_rss_mb} MB",
             "neurosym-ai",
         ),
-        ("GPU required", "No", "Recommended", "neurosym-ai"),
+        ("GPU (self-hosted)", "No", "Recommended", "N/A (API)"),
     ]
 
     col = [28, 13, 17, 12]

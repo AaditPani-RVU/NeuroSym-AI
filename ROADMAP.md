@@ -37,8 +37,8 @@ Bugs caught post-ship that undermine credibility:
 - [x] `neurosym.__init__` was missing `RegexRule`, `SchemaRule`, `DenyIfContains`, `PythonPredicateRule` — commonly used symbols that required knowing the submodule path
 
 **Remaining:**
-- [ ] `NeurosymCallbackHandler` does not inherit from `BaseCallbackHandler` — current tests use a fake base class, so real LangChain registration is untested. Fix: lazy-inherit via a module-level factory so the class is properly registered in LangChain's callback system
-- [ ] `BENCHMARKS.md` bench script (`nemo_comparison.py`) still embeds aggressive NeMo assumptions in reference comments — align with the more careful prose
+- [x] `NeurosymCallbackHandler` does not inherit from `BaseCallbackHandler` — current tests use a fake base class, so real LangChain registration is untested. Fix: lazy-inherit via a module-level factory so the class is properly registered in LangChain's callback system
+- [x] `BENCHMARKS.md` bench script (`nemo_comparison.py`) still embeds aggressive NeMo assumptions in reference comments — align with the more careful prose
 
 ### 0.4.2 — Async ConversationGuard
 

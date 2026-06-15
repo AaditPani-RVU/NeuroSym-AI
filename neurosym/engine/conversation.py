@@ -83,8 +83,8 @@ class ConversationSession:
         self._window = window
         self._conv_rules = conv_rules
         self._history: list[Turn] = list(history or [])
-        self._lock = threading.Lock()  # sync callers
-        self._alock = asyncio.Lock()  # async callers
+        self._lock = threading.Lock()
+        self._check_alock = asyncio.Lock()  # serialises concurrent acheck() calls
 
     # ------------------------------------------------------------------ #
     # Public API                                                           #
@@ -109,19 +109,16 @@ class ConversationSession:
         new_turn = Turn(role=role, content=content)
         with self._lock:
             prior = self._history[-self._window :] if self._window > 0 else list(self._history)
-        turns = prior + [new_turn]
-        context = "\n".join(f"[{t.role}] {t.content}" for t in turns)
-
-        result = self._guard.apply_text(context)
-        self._apply_conv_rules(result, turns)
-
-        with self._lock:
+            turns = prior + [new_turn]
+            context = "\n".join(f"[{t.role}] {t.content}" for t in turns)
+            result = self._guard.apply_text(context)
+            self._apply_conv_rules(result, turns)
             self._history.append(new_turn)
         return result
 
     async def aadd(self, role: str, content: str) -> None:
         """Async version of :meth:`add` — record a turn without evaluating it."""
-        async with self._alock:
+        with self._lock:
             self._history.append(Turn(role=role, content=content))
 
     async def acheck(self, role: str, content: str) -> GuardResult:
@@ -129,20 +126,21 @@ class ConversationSession:
         Async version of :meth:`check` — evaluate a new turn against the conversation window.
 
         Uses :meth:`~neurosym.engine.guard.Guard.aapply_text` so the event loop
-        is never blocked. The asyncio lock is only held during the brief history
-        snapshot and append steps — never across the await.
+        is never blocked. ``_check_alock`` serialises concurrent acheck() calls so
+        two callers cannot both snapshot the same history window simultaneously.
+        ``_lock`` is held briefly (no await) for all history mutations, keeping
+        sync and async paths on the same lock.
         """
         new_turn = Turn(role=role, content=content)
-        async with self._alock:
-            prior = self._history[-self._window :] if self._window > 0 else list(self._history)
-        turns = prior + [new_turn]
-        context = "\n".join(f"[{t.role}] {t.content}" for t in turns)
-
-        result = await self._guard.aapply_text(context)
-        self._apply_conv_rules(result, turns)
-
-        async with self._alock:
-            self._history.append(new_turn)
+        async with self._check_alock:
+            with self._lock:
+                prior = self._history[-self._window :] if self._window > 0 else list(self._history)
+            turns = prior + [new_turn]
+            context = "\n".join(f"[{t.role}] {t.content}" for t in turns)
+            result = await self._guard.aapply_text(context)
+            self._apply_conv_rules(result, turns)
+            with self._lock:
+                self._history.append(new_turn)
         return result
 
     def history(self) -> list[dict[str, Any]]:
@@ -184,19 +182,25 @@ class ConversationSession:
             return
         extra: list[Violation] = []
         for r in self._conv_rules:
-            extra.extend(r.evaluate_turns(turns))
+            try:
+                extra.extend(r.evaluate_turns(turns))
+            except Exception as exc:
+                extra.append(
+                    Violation(
+                        rule_id=getattr(r, "id", r.__class__.__name__),
+                        message=f"rule exception: {exc}",
+                        meta={"exception": repr(exc)},
+                    )
+                )
         if extra:
-            for v in extra:
-                result.violations.append(v.to_dict())
+            v_dicts = [self._guard._v_to_dict(v) for v in extra]
+            result.violations.extend(v_dicts)
             result.ok = False
             result.blocked = True
-
-    def _build_context(self, new_turn: Turn) -> str:
-        """Concatenate the window of prior turns plus the incoming turn."""
-        with self._lock:
-            prior = self._history[-self._window :] if self._window > 0 else list(self._history)
-        all_turns = prior + [new_turn]
-        return "\n".join(f"[{t.role}] {t.content}" for t in all_turns)
+            if self._guard._has_hard_deny(extra):
+                result.hard_denied = True
+            if result.trace:
+                result.trace[-1].violations.extend(v_dicts)
 
 
 class ConversationGuard:

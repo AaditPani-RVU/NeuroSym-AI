@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NeuroSym-AI — Component Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ── Reset & base ─────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #09090F;
+    --surface:   #111118;
+    --card:      #16161F;
+    --border:    #1E1E2E;
+    --border-hi: #2A2A40;
+    --cyan:      #00E5CC;
+    --cyan-dim:  rgba(0,229,204,0.12);
+    --amber:     #F59E0B;
+    --amber-dim: rgba(245,158,11,0.12);
+    --purple:    #A78BFA;
+    --purple-dim:rgba(167,139,250,0.10);
+    --green:     #34D399;
+    --green-dim: rgba(52,211,153,0.10);
+    --red:       #F87171;
+    --red-dim:   rgba(248,113,113,0.10);
+    --blue:      #60A5FA;
+    --blue-dim:  rgba(96,165,250,0.10);
+    --text:      #E2E8F0;
+    --muted:     #6B7280;
+    --sub:       #94A3B8;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'DM Sans', sans-serif;
+    --display:   'Syne Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Typography ───────────────────────────────── */
+  h1, h2, h3, h4 { font-family: var(--display); line-height: 1.2; }
+  h1 { font-size: 2.4rem; color: var(--cyan); letter-spacing: -0.02em; }
+  h2 { font-size: 1.1rem; color: var(--sub); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 1.2rem; }
+  h3 { font-size: 0.95rem; color: var(--cyan); letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+  h4 { font-size: 0.8rem; color: var(--purple); letter-spacing: 0.08em; text-transform: uppercase; }
+  p { color: var(--sub); margin-bottom: 0.7rem; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    background: var(--border);
+    color: var(--cyan);
+    padding: 0.1em 0.45em;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    background: #0D0D18;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    line-height: 1.65;
+    color: #C9D1D9;
+    margin: 0.8rem 0;
+  }
+  pre .kw  { color: var(--purple); }
+  pre .st  { color: #A3E635; }
+  pre .cm  { color: var(--muted); font-style: italic; }
+  pre .fn  { color: var(--cyan); }
+  pre .cl  { color: var(--amber); }
+  pre .kv  { color: var(--blue); }
+
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Layout ───────────────────────────────────── */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+  }
+
+  /* ── Header ───────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 3.5rem 0 2.5rem;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -100px;
+    width: 500px;
+    height: 300px;
+    background: radial-gradient(ellipse, rgba(0,229,204,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .header-sub {
+    color: var(--sub);
+    font-size: 0.92rem;
+    margin-top: 0.6rem;
+    max-width: 600px;
+  }
+  .badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.4rem;
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 0.2em 0.7em;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+  }
+  .badge-cyan   { background: var(--cyan-dim);   color: var(--cyan);   border: 1px solid rgba(0,229,204,0.25); }
+  .badge-amber  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,158,11,0.25); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+  .badge-green  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(52,211,153,0.25); }
+
+  /* ── Pipeline diagram ─────────────────────────── */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 3rem;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .pipe-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+  }
+  .pipe-box {
+    background: var(--card);
+    border: 1px solid var(--border-hi);
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .pipe-box.inp  { border-color: var(--cyan);   color: var(--cyan);   background: var(--cyan-dim); }
+  .pipe-box.rule { border-color: var(--amber);  color: var(--amber);  background: var(--amber-dim); }
+  .pipe-box.out  { border-color: var(--green);  color: var(--green);  background: var(--green-dim); }
+  .pipe-box.eng  { border-color: var(--purple); color: var(--purple); background: var(--purple-dim); }
+  .pipe-label {
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pipe-arrow {
+    color: var(--border-hi);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    padding: 0 0.3rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* ── Section ──────────────────────────────────── */
+  section {
+    margin-bottom: 3.5rem;
+  }
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+
+  /* ── Cards ────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--border-hi); }
+  .card-cyan   { border-left: 3px solid var(--cyan); }
+  .card-amber  { border-left: 3px solid var(--amber); }
+  .card-purple { border-left: 3px solid var(--purple); }
+  .card-green  { border-left: 3px solid var(--green); }
+  .card-red    { border-left: 3px solid var(--red); }
+  .card-blue   { border-left: 3px solid var(--blue); }
+
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .card-name {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .tag-input   { background: var(--cyan-dim);   color: var(--cyan);   border: 1px solid rgba(0,229,204,0.2); }
+  .tag-output  { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(248,113,113,0.2); }
+  .tag-either  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,158,11,0.2); }
+  .tag-engine  { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+  .tag-protocol{ background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(96,165,250,0.2); }
+  .tag-extra   { background: #1A1A2A; color: var(--muted); border: 1px solid var(--border); }
+  .tag-new     { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+
+  /* ── Grid ─────────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* ── Severity pills ───────────────────────────── */
+  .severity-table {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin: 0.6rem 0;
+  }
+  .sev {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.2em 0.7em;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+  .sev-info     { background: #1E293B; color: #64748B; }
+  .sev-low      { background: var(--blue-dim); color: var(--blue); }
+  .sev-medium   { background: var(--amber-dim); color: var(--amber); }
+  .sev-high     { background: rgba(249,115,22,0.12); color: #FB923C; }
+  .sev-critical { background: var(--red-dim); color: var(--red); }
+
+  /* ── Method list ──────────────────────────────── */
+  .method-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0.6rem 0;
+  }
+  .method {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+  }
+  .method-sig {
+    font-family: var(--mono);
+    font-size: 0.77rem;
+    color: var(--cyan);
+    flex-shrink: 0;
+  }
+  .method-desc { font-size: 0.8rem; color: var(--muted); }
+
+  /* ── Presets list ─────────────────────────────── */
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 0.4rem;
+    margin: 0.6rem 0;
+  }
+  .preset {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 0.35rem 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--amber);
+  }
+
+  /* ── Nav sidebar (sticky) ─────────────────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+
+  nav {
+    position: sticky;
+    top: 2rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+  }
+  nav h4 { color: var(--muted); margin-bottom: 0.8rem; font-size: 0.65rem; }
+  nav ul { list-style: none; display: flex; flex-direction: column; gap: 0.15rem; }
+  nav li a {
+    color: var(--sub);
+    display: block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.1s;
+  }
+  nav li a:hover {
+    background: var(--card);
+    color: var(--cyan);
+    text-decoration: none;
+  }
+  nav .nav-group { color: var(--muted); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.6rem 0.5rem 0.2rem; }
+
+  /* ── Boolean algebra viz ──────────────────────── */
+  .algebra-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+  @media (max-width: 700px) { .algebra-grid { grid-template-columns: 1fr; } }
+  .alg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+  }
+  .alg-name { font-family: var(--mono); font-size: 0.9rem; color: var(--purple); margin-bottom: 0.3rem; }
+  .alg-logic { font-family: var(--mono); font-size: 0.72rem; color: var(--amber); margin-bottom: 0.3rem; }
+  .alg-desc { font-size: 0.8rem; color: var(--muted); }
+
+  /* ── Result field table ───────────────────────── */
+  .field-table { width: 100%; border-collapse: collapse; margin: 0.6rem 0; }
+  .field-table th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .field-table td {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .field-table td:first-child { font-family: var(--mono); font-size: 0.77rem; color: var(--cyan); }
+  .field-table td:nth-child(2) { color: var(--purple); font-family: var(--mono); font-size: 0.72rem; }
+  .field-table td:nth-child(3) { color: var(--sub); }
+  .field-table tr:last-child td { border-bottom: none; }
+
+  /* ── Comparison table ─────────────────────────── */
+  .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .cmp-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.5rem 0.8rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .cmp-table th:first-child { text-align: left; }
+  .cmp-table td {
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--border);
+    text-align: center;
+    color: var(--sub);
+  }
+  .cmp-table td:first-child { text-align: left; font-family: var(--mono); font-size: 0.75rem; color: var(--text); }
+  .cmp-table .yes { color: var(--green); }
+  .cmp-table .no  { color: var(--muted); }
+  .cmp-table .hl  { background: rgba(0,229,204,0.04); }
+  .cmp-table tr:hover td { background: var(--surface); }
+
+  /* ── Footnote / callout ───────────────────────── */
+  .callout {
+    background: var(--cyan-dim);
+    border: 1px solid rgba(0,229,204,0.2);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+    color: var(--sub);
+    margin: 0.8rem 0;
+  }
+  .callout strong { color: var(--cyan); }
+  .callout-amber {
+    background: var(--amber-dim);
+    border-color: rgba(245,158,11,0.2);
+  }
+  .callout-amber strong { color: var(--amber); }
+
+  /* ── Scroll fade-in ───────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card, section { animation: fadeUp 0.35s ease both; }
+
+  /* ── Footer ───────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-eyebrow">component reference · v0.4.3</div>
+  <h1>NeuroSym-AI</h1>
+  <p class="header-sub">
+    Neuro-symbolic guardrails for LLMs, voice agents, and agentic pipelines.
+    Deterministic. Provider-agnostic. Fully auditable.
+  </p>
+  <div class="badges">
+    <span class="badge badge-cyan">Python 3.10+</span>
+    <span class="badge badge-amber">PyPI · neurosym-ai</span>
+    <span class="badge badge-green">MIT License</span>
+    <span class="badge badge-purple">mypy strict</span>
+  </div>
+</header>
+
+<!-- ── PIPELINE OVERVIEW ── -->
+<section id="overview">
+  <h2>Pipeline</h2>
+  <div class="pipeline">
+    <div class="pipe-node">
+      <div class="pipe-box inp">Voice / Text / JSON</div>
+      <div class="pipe-label">Input</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node">
+      <div class="pipe-box inp">Artifact</div>
+      <div class="pipe-label">Container</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node">
+      <div class="pipe-box rule">PromptInjectionRule<br>BanTopicsRule<br>SemanticInjection…</div>
+      <div class="pipe-label">Input Rules</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node">
+      <div class="pipe-box eng">Guard Engine</div>
+      <div class="pipe-label">Core</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node">
+      <div class="pipe-box rule">SecretLeakageRule<br>SystemPromptRule<br>StreamingRule…</div>
+      <div class="pipe-label">Output Rules</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node">
+      <div class="pipe-box out">GuardResult<br>ok / violations / trace</div>
+      <div class="pipe-label">Result</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Core idea:</strong> NeuroSym guards <em>information</em>, not prompts. Inputs can come from voice, tools, databases, or LLMs. Rules are explicit, testable Python — no black boxes, no API keys required.
+  </div>
+</section>
+
+<!-- ── TWO-COLUMN LAYOUT ── -->
+<div class="layout">
+
+<!-- NAV -->
+<nav>
+  <h4>Jump to</h4>
+  <ul>
+    <li class="nav-group">Core</li>
+    <li><a href="#guard">Guard</a></li>
+    <li><a href="#artifact">Artifact</a></li>
+    <li><a href="#guardresult">GuardResult</a></li>
+    <li><a href="#violation">Violation &amp; Severity</a></li>
+    <li class="nav-group">Rule System</li>
+    <li><a href="#base-rule">BaseRule / Rule</a></li>
+    <li><a href="#rule-deco">@rule decorator</a></li>
+    <li><a href="#streaming-rule">StreamingRule</a></li>
+    <li><a href="#near-miss">NearMissRule</a></li>
+    <li class="nav-group">Input Rules</li>
+    <li><a href="#prompt-injection">PromptInjectionRule</a></li>
+    <li><a href="#ban-topics">BanTopicsRule</a></li>
+    <li><a href="#semantic">SemanticInjectionRule</a></li>
+    <li><a href="#classifier">IntentClassifierRule</a></li>
+    <li class="nav-group">Output Rules</li>
+    <li><a href="#secrets">SecretLeakageRule</a></li>
+    <li><a href="#system-prompt">SystemPromptRegurgitation</a></li>
+    <li class="nav-group">Agent &amp; Utility</li>
+    <li><a href="#action-policy">ActionPolicyRule</a></li>
+    <li><a href="#utility-rules">RegexRule / SchemaRule…</a></li>
+    <li class="nav-group">Composition</li>
+    <li><a href="#composite">AllOf / AnyOf / Not…</a></li>
+    <li class="nav-group">Conversation</li>
+    <li><a href="#conversation-guard">ConversationGuard</a></li>
+    <li><a href="#conversation-rule">ConversationRule</a></li>
+    <li class="nav-group">Tooling</li>
+    <li><a href="#benchmark">Benchmark</a></li>
+    <li><a href="#langchain">LangChain</a></li>
+    <li><a href="#sat">SAT Linter</a></li>
+    <li><a href="#cli">CLI</a></li>
+    <li><a href="#agents">Agent System</a></li>
+  </ul>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main>
+
+<!-- ══════════════════════ CORE ══════════════════════ -->
+
+<section id="guard">
+  <h2>Guard — The Core Engine</h2>
+  <div class="card card-cyan">
+    <div class="card-head">
+      <span class="card-name">Guard</span>
+      <span class="tag tag-engine">engine/guard.py</span>
+    </div>
+    <p>The central engine that routes input through rules and returns a structured result. Operates in three modes: information-first (offline), LLM-first (generate + repair loop), and streaming.</p>
+
+    <h3>Constructor</h3>
+    <pre><span class="kw">from</span> neurosym <span class="kw">import</span> Guard
+
+guard = <span class="cl">Guard</span>(
+    rules=[...],          <span class="cm"># list of Rule instances</span>
+    llm=my_llm,           <span class="cm"># optional — needed for .generate() / .stream()</span>
+    max_retries=<span class="kv">2</span>,        <span class="cm"># LLM repair loop attempts</span>
+    deny_above=<span class="st">"high"</span>,    <span class="cm"># auto-block violations ≥ this severity</span>
+    deny_rule_ids=[...],  <span class="cm"># specific rule IDs that always hard-deny</span>
+    enable_offline_repairs=<span class="kv">True</span>,
+)</pre>
+
+    <h3>Information-First API (no LLM required)</h3>
+    <div class="method-list">
+      <div class="method"><span class="method-sig">.apply_text(text, meta?)</span><span class="method-desc">→ GuardResult — evaluate raw string</span></div>
+      <div class="method"><span class="method-sig">.apply_json(obj, meta?)</span><span class="method-desc">→ GuardResult — evaluate dict/list</span></div>
+      <div class="method"><span class="method-sig">.apply(Artifact)</span><span class="method-desc">→ GuardResult — evaluate any Artifact</span></div>
+      <div class="method"><span class="method-sig">.aapply_text(text)</span><span class="method-desc">→ async GuardResult — rules run concurrently via asyncio</span></div>
+      <div class="method"><span class="method-sig">.aapply_json(obj)</span><span class="method-desc">→ async GuardResult</span></div>
+    </div>
+
+    <h3>LLM-First API</h3>
+    <div class="method-list">
+      <div class="method"><span class="method-sig">.generate(prompt, **kwargs)</span><span class="method-desc">→ GuardResult — generate + validate + repair loop</span></div>
+      <div class="method"><span class="method-sig">.stream(prompt, **kwargs)</span><span class="method-desc">→ Generator[str, GuardResult] — yield chunks, abort on hard-deny</span></div>
+      <div class="method"><span class="method-sig">.agenerate(prompt)</span><span class="method-desc">→ async GuardResult — LLM in executor, rules concurrent</span></div>
+    </div>
+
+    <div class="callout">
+      <strong>Offline repairs:</strong> Guard automatically strips Markdown code fences and extracts embedded JSON blocks before validation — no LLM needed for these cleanups.
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<section id="artifact">
+  <h2>Artifact</h2>
+  <div class="card card-blue">
+    <div class="card-head">
+      <span class="card-name">Artifact</span>
+      <span class="tag tag-engine">frozen dataclass</span>
+    </div>
+    <p>Universal container for any information entering the pipeline. Guards work on Artifacts, not raw strings — this is what "information-first" means.</p>
+    <table class="field-table">
+      <tr><th>field</th><th>type</th><th>meaning</th></tr>
+      <tr><td>kind</td><td>str</td><td><code>"text"</code> or <code>"json"</code> — determines how rules interpret content</td></tr>
+      <tr><td>content</td><td>Any</td><td>The actual data (str for text, dict/list for json)</td></tr>
+      <tr><td>meta</td><td>dict?</td><td>Optional context: trace_id, origin, timestamp, etc.</td></tr>
+    </table>
+    <pre>artifact = <span class="cl">Artifact</span>(kind=<span class="st">"text"</span>, content=<span class="st">"raw voice transcription"</span>, meta={<span class="st">"source"</span>: <span class="st">"mic"</span>})</pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<section id="guardresult">
+  <h2>GuardResult</h2>
+  <div class="card card-purple">
+    <div class="card-head">
+      <span class="card-name">GuardResult</span>
+      <span class="tag tag-engine">dataclass</span>
+    </div>
+    <p>Returned by every Guard call. Contains the full audit trace — what was checked, what fired, and what was repaired.</p>
+    <table class="field-table">
+      <tr><th>field</th><th>type</th><th>meaning</th></tr>
+      <tr><td>ok</td><td>bool</td><td>True iff zero violations — always the top-level pass/fail</td></tr>
+      <tr><td>blocked</td><td>bool</td><td>Always <code>not ok</code> — the allow/deny decision</td></tr>
+      <tr><td>hard_denied</td><td>bool</td><td>True iff a violation matched deny_above or deny_rule_ids</td></tr>
+      <tr><td>violations</td><td>list[dict]</td><td>All violations: {rule_id, severity, message, meta}</td></tr>
+      <tr><td>repairs</td><td>list[dict]</td><td>Offline deterministic repairs applied</td></tr>
+      <tr><td>near_misses</td><td>list[dict]</td><td>Borderline signals from NearMissRule implementors</td></tr>
+      <tr><td>trace</td><td>list[TraceEntry]</td><td>Full per-attempt audit log</td></tr>
+      <tr><td>artifact</td><td>Artifact?</td><td>The repaired artifact that was validated</td></tr>
+    </table>
+    <pre>result = guard.<span class="fn">apply_text</span>(<span class="st">"some input"</span>)
+result.ok            <span class="cm"># True / False</span>
+result.blocked       <span class="cm"># True if any violation</span>
+result.hard_denied   <span class="cm"># True only if severity ≥ deny_above</span>
+result.<span class="fn">user_summary</span>() <span class="cm"># safe-to-show violations (no attack spans)</span>
+result.<span class="fn">to_dict</span>()     <span class="cm"># full JSON-serializable trace</span></pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<section id="violation">
+  <h2>Violation &amp; Severity</h2>
+  <div class="card card-amber">
+    <div class="card-head">
+      <span class="card-name">Violation</span>
+      <span class="tag tag-either">frozen dataclass</span>
+    </div>
+    <p>Produced by a rule when it detects a problem. Contains a stable rule ID, human-readable message, severity level, optional machine-readable meta, and a user-safe message.</p>
+    <table class="field-table">
+      <tr><th>field</th><th>type</th><th>meaning</th></tr>
+      <tr><td>rule_id</td><td>str</td><td>Stable dotted identifier e.g. <code>adv.prompt_injection</code></td></tr>
+      <tr><td>message</td><td>str</td><td>Full audit message (may contain matched text — never show users)</td></tr>
+      <tr><td>severity</td><td>Severity</td><td>One of the five levels below</td></tr>
+      <tr><td>meta</td><td>dict?</td><td>Machine-readable context: matched spans, paths, scores</td></tr>
+      <tr><td>user_message</td><td>str?</td><td>Sanitized message safe to display to end users</td></tr>
+    </table>
+    <h3>Severity Levels</h3>
+    <div class="severity-table">
+      <span class="sev sev-info">info</span>
+      <span class="sev sev-low">low</span>
+      <span class="sev sev-medium">medium</span>
+      <span class="sev sev-high">high</span>
+      <span class="sev sev-critical">critical</span>
+    </div>
+    <p>Ordered: info &lt; low &lt; medium &lt; high &lt; critical. <code>deny_above="high"</code> blocks <code>high</code> and <code>critical</code> violations.</p>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ RULE SYSTEM ══════════════════════ -->
+
+<section id="base-rule">
+  <h2>Rule System — Base</h2>
+  <div class="card card-blue">
+    <div class="card-head">
+      <span class="card-name">Rule</span>
+      <span class="tag tag-protocol">Protocol</span>
+    </div>
+    <p>The minimal interface every rule satisfies. Just two things: a stable string <code>id</code> and an <code>evaluate(output) → list[Violation]</code> method. An empty list means the rule passed.</p>
+  </div>
+
+  <div class="card card-blue">
+    <div class="card-head">
+      <span class="card-name">BaseRule</span>
+      <span class="tag tag-protocol">Optional base class</span>
+    </div>
+    <p>Convenience base that provides <code>fail()</code>, <code>ok()</code>, async <code>aevaluate()</code>, and a template method pattern. Override <code>check()</code> instead of <code>evaluate()</code>.</p>
+    <pre><span class="kw">class</span> <span class="cl">MyRule</span>(<span class="cl">BaseRule</span>):
+    id = <span class="st">"biz.no_competitors"</span>
+
+    <span class="kw">def</span> <span class="fn">check</span>(self, output):
+        <span class="kw">if</span> <span class="st">"acme"</span> <span class="kw">in</span> output.lower():
+            <span class="kw">return</span> self.<span class="fn">fail</span>(<span class="st">"mentioned competitor"</span>, severity=<span class="st">"medium"</span>)</pre>
+  </div>
+</section>
+
+<section id="rule-deco">
+  <div class="card card-green">
+    <div class="card-head">
+      <span class="card-name">@rule decorator</span>
+      <span class="tag tag-protocol">One-liner authoring</span>
+    </div>
+    <p>Turns a plain generator function into a <code>Rule</code> instance without subclassing. Yield violation message strings; return nothing to pass.</p>
+    <pre><span class="kw">from</span> neurosym.rules.base <span class="kw">import</span> rule
+
+<span class="kw">@</span><span class="fn">rule</span>(id=<span class="st">"biz.no_competitors"</span>, severity=<span class="st">"medium"</span>)
+<span class="kw">def</span> <span class="fn">no_competitor_mentions</span>(text):
+    <span class="kw">for</span> c <span class="kw">in</span> [<span class="st">"acme"</span>, <span class="st">"umbrella"</span>]:
+        <span class="kw">if</span> c.lower() <span class="kw">in</span> text.lower():
+            <span class="kw">yield</span> <span class="st">f"mentioned competitor: {c}"</span></pre>
+  </div>
+</section>
+
+<section id="streaming-rule">
+  <div class="card card-cyan">
+    <div class="card-head">
+      <span class="card-name">StreamingRule</span>
+      <span class="tag tag-protocol">Protocol</span>
+    </div>
+    <p>Rules implementing this protocol are evaluated <em>incrementally</em> during <code>Guard.stream()</code>. A hard-deny from a streaming rule stops chunk emission immediately — the triggering chunk is never forwarded to the consumer.</p>
+    <div class="method-list">
+      <div class="method"><span class="method-sig">feed(chunk: str)</span><span class="method-desc">→ list[Violation] — process one arriving chunk</span></div>
+      <div class="method"><span class="method-sig">finalize()</span><span class="method-desc">→ list[Violation] — stream ended, emit any remaining violations</span></div>
+      <div class="method"><span class="method-sig">reset()</span><span class="method-desc">→ None — clear state before a new stream begins</span></div>
+    </div>
+    <div class="callout-amber callout">
+      <strong>SecretLeakageRule</strong> implements StreamingRule with a 256-char overlap buffer so credentials split across chunk boundaries are still caught.
+    </div>
+  </div>
+</section>
+
+<section id="near-miss">
+  <div class="card card-purple">
+    <div class="card-head">
+      <span class="card-name">NearMissRule</span>
+      <span class="tag tag-protocol">Protocol</span>
+    </div>
+    <p>Optional protocol for rules that can report borderline signals — inputs that passed but were close to being blocked. Guard calls <code>near_miss()</code> only on passing results and returns them in <code>GuardResult.near_misses</code>. Useful for threshold tuning and human review flagging.</p>
+    <pre>result = guard.<span class="fn">apply_text</span>(borderline_input)
+<span class="kw">if</span> result.ok <span class="kw">and</span> result.near_misses:
+    flag_for_review(result.near_misses)  <span class="cm"># [{rule_id, score, message}]</span></pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ INPUT RULES ══════════════════════ -->
+
+<section id="prompt-injection">
+  <h2>Input Rules</h2>
+  <div class="card card-amber">
+    <div class="card-head">
+      <span class="card-name">PromptInjectionRule</span>
+      <span class="tag tag-input">Input</span>
+    </div>
+    <p>Detects adversarial attempts to override LLM instructions using 9 preset attack categories derived from known taxonomies (PAIR, DAN, GCG, Perez et al. 2022, Garak corpus). Sub-millisecond regex matching.</p>
+    <h3>Attack Presets</h3>
+    <div class="preset-grid">
+      <span class="preset">ignore_instructions</span>
+      <span class="preset">role_switch</span>
+      <span class="preset">system_commands</span>
+      <span class="preset">path_traversal</span>
+      <span class="preset">delimiter_injection</span>
+      <span class="preset">exfiltration</span>
+      <span class="preset">obfuscation</span>
+      <span class="preset">indirect_injection</span>
+      <span class="preset">system_prompt_extraction</span>
+    </div>
+    <pre>rule = <span class="cl">PromptInjectionRule</span>()                              <span class="cm"># all presets</span>
+rule = <span class="cl">PromptInjectionRule</span>(presets=[<span class="st">"ignore_instructions"</span>]) <span class="cm"># specific only</span>
+rule = <span class="cl">PromptInjectionRule</span>(extra_patterns=[<span class="st">r"my_pattern"</span>]) <span class="cm"># custom on top</span>
+rule = <span class="cl">PromptInjectionRule</span>(severity=<span class="st">"critical"</span>)            <span class="cm"># override severity</span></pre>
+    <p>The pack system (<code>injection-v1.json</code>) allows loading versioned pattern sets identified by SHA-256 fingerprint for auditability.</p>
+  </div>
+</section>
+
+<section id="ban-topics">
+  <div class="card card-red">
+    <div class="card-head">
+      <span class="card-name">BanTopicsRule</span>
+      <span class="tag tag-input">Input</span>
+    </div>
+    <p>Detects <em>what</em> is being requested, not how. Catches clinically or academically worded synthesis requests that score near 0.0 on tone/injection models. Input is canonicalized: zero-width chars, Cyrillic homoglyphs, and spaced letters are all neutralized before matching.</p>
+    <h3>Topic Presets</h3>
+    <div class="preset-grid">
+      <span class="preset">cbrn_weapons</span>
+      <span class="preset">drug_synthesis</span>
+      <span class="preset">self_harm_methods</span>
+      <span class="preset">malware_exploit</span>
+    </div>
+    <pre>rule = <span class="cl">BanTopicsRule</span>()                                  <span class="cm"># all presets</span>
+rule = <span class="cl">BanTopicsRule</span>(presets=[<span class="st">"cbrn_weapons"</span>])           <span class="cm"># specific</span>
+rule = <span class="cl">BanTopicsRule</span>(extra_patterns=[<span class="st">r"\bmy_topic\b"</span>])   <span class="cm"># extend</span></pre>
+    <div class="callout-amber callout">
+      <strong>Bidirectional patterns:</strong> "synthesize TATP" and "TATP synthesis" both fire. Negative lookaheads suppress false positives on defensive-security queries.
+    </div>
+  </div>
+</section>
+
+<section id="semantic">
+  <div class="card card-cyan">
+    <div class="card-head">
+      <span class="card-name">SemanticInjectionRule</span>
+      <span class="tag tag-input">Input</span>
+      <span class="tag tag-extra">pip install neurosym-ai[embeddings]</span>
+    </div>
+    <p>Embedding-based fallback that catches paraphrase attacks bypassing the regex layer. Uses sentence-transformers to compute cosine similarity against a curated anchor set of injection examples. ~20ms latency.</p>
+    <pre>guard = <span class="cl">Guard</span>(rules=[
+    <span class="cl">PromptInjectionRule</span>(),   <span class="cm"># fast regex — sub-ms</span>
+    <span class="cl">SemanticInjectionRule</span>(), <span class="cm"># semantic fallback — ~20ms</span>
+])</pre>
+    <p>The <code>tail_fraction=0.25</code> default evaluates the last 25% of input independently alongside the full text — catches attacks where a long innocent preamble dilutes the full-text similarity score below threshold.</p>
+  </div>
+</section>
+
+<section id="classifier">
+  <div class="card card-purple">
+    <div class="card-head">
+      <span class="card-name">IntentClassifierRule</span>
+      <span class="tag tag-input">Input</span>
+      <span class="tag tag-new">new in v0.4</span>
+      <span class="tag tag-extra">pip install neurosym-ai[classifier]</span>
+    </div>
+    <p>Zero-shot NLI intent detection using <code>facebook/bart-large-mnli</code> on CPU — no GPU required. Catches harmful intent expressed in novel phrasing that regex rules miss. ~400 MB model download on first use.</p>
+    <pre>rule = <span class="cl">IntentClassifierRule</span>(
+    bad_intents=[<span class="st">"weapons synthesis"</span>, <span class="st">"jailbreak attempt"</span>],
+    threshold=<span class="kv">0.75</span>,   <span class="cm"># confidence to trigger (0–1)</span>
+    severity=<span class="st">"high"</span>,
+)
+result.violations[<span class="kv">0</span>][<span class="st">"meta"</span>][<span class="st">"label"</span>]  <span class="cm"># matched intent label</span>
+result.violations[<span class="kv">0</span>][<span class="st">"meta"</span>][<span class="st">"score"</span>]  <span class="cm"># confidence score 0–1</span></pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ OUTPUT RULES ══════════════════════ -->
+
+<section id="secrets">
+  <h2>Output Rules</h2>
+  <div class="card card-red">
+    <div class="card-head">
+      <span class="card-name">SecretLeakageRule</span>
+      <span class="tag tag-output">Output</span>
+      <span class="tag tag-protocol">StreamingRule</span>
+    </div>
+    <p>Detects credentials and secrets in LLM responses. Implements StreamingRule — catches secrets split across chunk boundaries via a 256-char overlap window. Triggers on:</p>
+    <div class="preset-grid">
+      <span class="preset">AWS access key IDs</span>
+      <span class="preset">GitHub tokens</span>
+      <span class="preset">Google API keys</span>
+      <span class="preset">Slack tokens</span>
+      <span class="preset">Stripe keys</span>
+      <span class="preset">PEM private keys</span>
+      <span class="preset">JWTs</span>
+      <span class="preset">Bearer tokens</span>
+      <span class="preset">Passwords in URLs</span>
+      <span class="preset">Generic api_key=...</span>
+    </div>
+    <pre>rule = <span class="cl">SecretLeakageRule</span>(severity=<span class="st">"critical"</span>, max_examples=<span class="kv">3</span>)</pre>
+  </div>
+</section>
+
+<section id="system-prompt">
+  <div class="card card-amber">
+    <div class="card-head">
+      <span class="card-name">SystemPromptRegurgitationRule</span>
+      <span class="tag tag-output">Output</span>
+    </div>
+    <p>Detects when an LLM echoes your system prompt back to the user verbatim — a common prompt extraction attack. Initialize with the system prompt text you want to protect.</p>
+    <pre>rule = <span class="cl">SystemPromptRegurgitationRule</span>(
+    system_prompt=<span class="st">"You are a helpful assistant. Instructions: ..."</span>
+)</pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ ACTION POLICY ══════════════════════ -->
+
+<section id="action-policy">
+  <h2>ActionPolicyRule — Agent Plans</h2>
+  <div class="card card-green">
+    <div class="card-head">
+      <span class="card-name">ActionPolicyRule</span>
+      <span class="tag tag-input">Input</span>
+    </div>
+    <p>Validates structured JSON action plans before an agent executes them. A plan is a dict with an <code>intent</code>, <code>steps[]</code>, and optional <code>requires_confirmation</code>.</p>
+
+    <h3>Pre-built Factories</h3>
+    <div class="method-list">
+      <div class="method"><span class="method-sig">destructive_needs_confirmation()</span><span class="method-desc">delete/move/format require requires_confirmation=true</span></div>
+      <div class="method"><span class="method-sig">no_high_risk_without_intent()</span><span class="method-desc">send_email/upload require a non-empty intent field</span></div>
+      <div class="method"><span class="method-sig">max_steps(n)</span><span class="method-desc">cap plan length to prevent runaway agents</span></div>
+      <div class="method"><span class="method-sig">no_path_outside_sandbox(allowed_paths)</span><span class="method-desc">block path traversal in step parameters</span></div>
+    </div>
+
+    <pre><span class="kw">from</span> neurosym.rules.action_policy <span class="kw">import</span> (
+    destructive_needs_confirmation, max_steps, no_path_outside_sandbox
+)
+
+<span class="cm"># Custom policy via lambda</span>
+rule = <span class="cl">ActionPolicyRule</span>(
+    id=<span class="st">"policy.no_network_at_night"</span>,
+    policy=<span class="kw">lambda</span> plan: <span class="kw">not</span> (
+        <span class="fn">any</span>(s[<span class="st">"action"</span>] == <span class="st">"open_url"</span> <span class="kw">for</span> s <span class="kw">in</span> plan.get(<span class="st">"steps"</span>, []))
+        <span class="kw">and</span> <span class="fn">is_night_time</span>()
+    ),
+    message=<span class="st">"Network actions blocked during off-hours."</span>,
+    severity=<span class="st">"high"</span>,
+)</pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ UTILITY RULES ══════════════════════ -->
+
+<section id="utility-rules">
+  <h2>Utility Rules</h2>
+  <div class="grid-2">
+    <div class="card card-blue">
+      <div class="card-head">
+        <span class="card-name">RegexRule</span>
+        <span class="tag tag-either">Either</span>
+      </div>
+      <p>Pattern-based text validation. Fails when a pattern matches (deny-mode) or when a required pattern is absent.</p>
+      <pre><span class="cl">RegexRule</span>(
+    id=<span class="st">"fmt.phone"</span>,
+    pattern=<span class="st">r"\d{3}-\d{4}"</span>,
+    match_means=<span class="st">"pass"</span>
+)</pre>
+    </div>
+
+    <div class="card card-blue">
+      <div class="card-head">
+        <span class="card-name">SchemaRule</span>
+        <span class="tag tag-either">Either</span>
+      </div>
+      <p>JSON Schema enforcement for structured outputs. Validates against a jsonschema dict.</p>
+      <pre><span class="cl">SchemaRule</span>(
+    id=<span class="st">"schema.invoice"</span>,
+    schema={<span class="st">"required"</span>: [<span class="st">"amount"</span>]},
+)</pre>
+    </div>
+
+    <div class="card card-blue">
+      <div class="card-head">
+        <span class="card-name">DenyIfContains</span>
+        <span class="tag tag-either">Either</span>
+      </div>
+      <p>Banned substring detection. Simple, fast, and explicit. Good first line for known bad strings.</p>
+      <pre><span class="cl">DenyIfContains</span>(
+    id=<span class="st">"ban.weapons"</span>,
+    banned=[<span class="st">"explosive"</span>, <span class="st">"weapon"</span>],
+)</pre>
+    </div>
+
+    <div class="card card-blue">
+      <div class="card-head">
+        <span class="card-name">PythonPredicateRule</span>
+        <span class="tag tag-either">Either</span>
+      </div>
+      <p>Arbitrary Python predicate as a rule. For logic that doesn't fit regex or schema.</p>
+      <pre><span class="cl">PythonPredicateRule</span>(
+    id=<span class="st">"biz.word_count"</span>,
+    predicate=<span class="kw">lambda</span> t: <span class="fn">len</span>(t.split()) &lt; <span class="kv">500</span>,
+    message=<span class="st">"Response too long"</span>,
+)</pre>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ COMPOSITE ══════════════════════ -->
+
+<section id="composite">
+  <h2>Policy Algebra — Composite Rules</h2>
+  <p>Combine any rules with boolean logic to express complex policies as readable, testable Python expressions.</p>
+  <div class="algebra-grid">
+    <div class="alg-card">
+      <div class="alg-name">AllOf</div>
+      <div class="alg-logic">A AND B AND C…</div>
+      <div class="alg-desc">Collects violations from all children. Fails if any child fails. Use to group related rules under one ID.</div>
+    </div>
+    <div class="alg-card">
+      <div class="alg-name">AnyOf</div>
+      <div class="alg-logic">A OR B OR C…</div>
+      <div class="alg-desc">Fails only if ALL children fail (passes if at least one passes). Use when any of several conditions is sufficient to allow.</div>
+    </div>
+    <div class="alg-card">
+      <div class="alg-name">Not</div>
+      <div class="alg-logic">NOT A</div>
+      <div class="alg-desc">Inverts a rule — turns a "pass" into a "fail" and vice versa. Use to express absence conditions.</div>
+    </div>
+    <div class="alg-card">
+      <div class="alg-name">Implies</div>
+      <div class="alg-logic">A → B</div>
+      <div class="alg-desc">Fails only when the antecedent passes but the consequent fails. "If risky, must have confirmation."</div>
+    </div>
+  </div>
+  <pre><span class="kw">from</span> neurosym.rules.composite <span class="kw">import</span> AllOf, AnyOf, Not, Implies
+
+<span class="cm"># Block if BOTH injection detected AND action is destructive without confirmation</span>
+combined = <span class="cl">AllOf</span>([
+    <span class="cl">PromptInjectionRule</span>(presets=[<span class="st">"ignore_instructions"</span>]),
+    <span class="cl">Not</span>(<span class="fn">destructive_needs_confirmation</span>()),
+], id=<span class="st">"compound_threat"</span>)</pre>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ CONVERSATION ══════════════════════ -->
+
+<section id="conversation-guard">
+  <h2>ConversationGuard — Multi-Turn</h2>
+  <div class="card card-cyan">
+    <div class="card-head">
+      <span class="card-name">ConversationGuard</span>
+      <span class="tag tag-new">new in v0.4</span>
+      <span class="tag tag-engine">engine/conversation.py</span>
+    </div>
+    <p>Standard Guard is stateless — each call sees only what you pass it. ConversationGuard keeps a rolling session of prior turns so rules evaluate <strong>full conversation context</strong>. This catches slow-burn escalation attacks and cross-turn information leakage.</p>
+
+    <h3>Constructor</h3>
+    <pre>cg = <span class="cl">ConversationGuard</span>(
+    rules=[<span class="cl">DenyIfContains</span>(...), <span class="cl">MyConvRule</span>()],
+    window=<span class="kv">20</span>,        <span class="cm"># last N turns; 0 = unlimited history</span>
+    deny_above=<span class="st">"high"</span>  <span class="cm"># forwarded to inner Guard</span>
+)</pre>
+
+    <h3>Session API</h3>
+    <pre><span class="kw">with</span> cg.<span class="fn">session</span>() <span class="kw">as</span> s:
+    s.<span class="fn">add</span>(<span class="st">"user"</span>, <span class="st">"Let's discuss chemistry."</span>)      <span class="cm"># record without evaluating</span>
+    s.<span class="fn">add</span>(<span class="st">"assistant"</span>, <span class="st">"Sure, what aspect?"</span>)
+    result = s.<span class="fn">check</span>(<span class="st">"user"</span>, <span class="st">"How do I make an explosive?"</span>)
+    result.blocked  <span class="cm"># True — full history included in context</span>
+
+<span class="cm"># Async version</span>
+<span class="kw">async with</span> cg.<span class="fn">asession</span>() <span class="kw">as</span> s:
+    result = <span class="kw">await</span> s.<span class="fn">acheck</span>(<span class="st">"user"</span>, <span class="st">"..."</span>)
+
+<span class="cm"># Survive request boundaries — serialize and restore</span>
+state = s.<span class="fn">state</span>()   <span class="cm"># JSON-serializable dict</span>
+<span class="kw">with</span> cg.<span class="fn">session</span>(restore_state=state) <span class="kw">as</span> s:
+    ...              <span class="cm"># session resumes from saved history</span></pre>
+
+    <div class="callout">
+      <strong>Thread-safe:</strong> <code>add()</code> and <code>check()</code> use a threading.Lock so multiple coroutines or threads can call them concurrently. The async path uses asyncio.Lock and never blocks the event loop.
+    </div>
+  </div>
+</section>
+
+<section id="conversation-rule">
+  <div class="card card-purple">
+    <div class="card-head">
+      <span class="card-name">ConversationRule</span>
+      <span class="tag tag-protocol">Protocol</span>
+      <span class="tag tag-new">new in v0.4.3</span>
+    </div>
+    <p>Optional protocol for rules that need structured turn access — per-role logic, ordering checks, or multi-turn pattern matching that flat text concatenation would lose.</p>
+    <pre><span class="kw">class</span> <span class="cl">UserOnlyRule</span>:
+    id = <span class="st">"conv.user-only"</span>
+
+    <span class="kw">def</span> <span class="fn">evaluate_turns</span>(self, turns: list[Turn]) -> list[Violation]:
+        user_text = <span class="st">" "</span>.<span class="fn">join</span>(t.content <span class="kw">for</span> t <span class="kw">in</span> turns <span class="kw">if</span> t.role == <span class="st">"user"</span>)
+        <span class="kw">if</span> <span class="st">"forbidden"</span> <span class="kw">in</span> user_text:
+            <span class="kw">return</span> [<span class="cl">Violation</span>(rule_id=self.id, message=<span class="st">"..."</span>)]</pre>
+    <p>ConversationGuard routes a rule to <code>evaluate_turns()</code> if it implements ConversationRule, or <code>evaluate()</code> if it only implements Rule. A rule implementing <strong>both</strong> is routed to <code>evaluate_turns()</code> only — no double-evaluation.</p>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ BENCHMARK ══════════════════════ -->
+
+<section id="benchmark">
+  <h2>Benchmark Harness</h2>
+  <div class="card card-green">
+    <div class="card-head">
+      <span class="card-name">BenchmarkRunner / BenchmarkCase / BenchmarkResult</span>
+      <span class="tag tag-either">neurosym.bench</span>
+    </div>
+    <p>Built-in adversarial benchmark with 134 labeled prompt injection cases (104 attacks, 30 safe). Run against your guard configuration to measure block rate, false positive rate, and per-category performance.</p>
+    <pre><span class="kw">from</span> neurosym.bench <span class="kw">import</span> BenchmarkRunner, BenchmarkCase
+
+cases = <span class="cl">BenchmarkCase</span>.<span class="fn">load_builtin</span>(<span class="st">"prompt_injection"</span>)  <span class="cm"># 134 cases</span>
+results = <span class="cl">BenchmarkRunner</span>(guard).<span class="fn">run</span>(cases)
+
+results.block_rate          <span class="cm"># fraction of attacks blocked</span>
+results.false_positive_rate <span class="cm"># fraction of safe inputs wrongly blocked</span>
+results.avg_latency_ms
+results.<span class="fn">by_category</span>()       <span class="cm"># dict[category → BenchmarkResult]</span>
+<span class="fn">print</span>(results.<span class="fn">report</span>())      <span class="cm"># formatted table to stdout</span></pre>
+    <div class="callout">
+      <strong>Baseline results</strong> — PromptInjectionRule default: 79.8% block rate, 0.0% false positives, 0.48ms avg latency.
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ LANGCHAIN ══════════════════════ -->
+
+<section id="langchain">
+  <h2>LangChain Adapter</h2>
+  <div class="card card-cyan">
+    <div class="card-head">
+      <span class="card-name">NeurosymCallbackHandler</span>
+      <span class="tag tag-new">new in v0.4</span>
+      <span class="tag tag-extra">pip install neurosym-ai[langchain]</span>
+    </div>
+    <p>Drop into any LangChain chain to enforce input and output guards without changing chain logic. Guards fire at LLM call boundaries; <code>raise_on_violation=True</code> raises <code>ValueError</code>, <code>False</code> records silently.</p>
+    <pre>handler = <span class="cl">NeurosymCallbackHandler</span>(
+    input_guard=<span class="cl">Guard</span>(rules=[<span class="cl">PromptInjectionRule</span>()], deny_above=<span class="st">"high"</span>),
+    output_guard=<span class="cl">Guard</span>(rules=[<span class="cl">SecretLeakageRule</span>()],  deny_above=<span class="st">"critical"</span>),
+    raise_on_violation=<span class="kv">True</span>,
+)
+llm = <span class="cl">ChatOpenAI</span>(callbacks=[handler])
+handler.last_input_result   <span class="cm"># GuardResult from last input check</span>
+handler.last_output_result  <span class="cm"># GuardResult from last output check</span></pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ SAT LINTER ══════════════════════ -->
+
+<section id="sat">
+  <h2>SAT / SMT Policy Linter</h2>
+  <div class="card card-purple">
+    <div class="card-head">
+      <span class="card-name">PolicyLinter (Z3-backed)</span>
+      <span class="tag tag-either">neurosym.policy.sat</span>
+      <span class="tag tag-extra">pip install neurosym-ai[z3]</span>
+    </div>
+    <p>Translates composite rule algebra into Z3 boolean formulas and checks for logical defects. Catches policy bugs before deployment, not at runtime.</p>
+    <table class="field-table">
+      <tr><th>issue kind</th><th colspan="2">meaning</th></tr>
+      <tr><td>unsatisfiable</td><td colspan="2">Policy can never pass — would block everything</td></tr>
+      <tr><td>tautology</td><td colspan="2">Policy always passes — dead check, never blocks</td></tr>
+      <tr><td>subsumed</td><td colspan="2">One rule makes another redundant in the same AllOf</td></tr>
+    </table>
+    <pre>python -m neurosym policy lint   <span class="cm"># demo run</span></pre>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ CLI ══════════════════════ -->
+
+<section id="cli">
+  <h2>CLI</h2>
+  <div class="card card-blue">
+    <div class="card-head">
+      <span class="card-name">python -m neurosym</span>
+      <span class="tag tag-extra">pip install neurosym-ai[cli]</span>
+    </div>
+    <div class="method-list">
+      <div class="method"><span class="method-sig">doctor</span><span class="method-desc">Diagnose install: version, packs, deps, benchmark smoke test</span></div>
+      <div class="method"><span class="method-sig">packs list</span><span class="method-desc">List all versioned rule packs with SHA-256 fingerprints</span></div>
+      <div class="method"><span class="method-sig">packs show &lt;name&gt;</span><span class="method-desc">Inspect a specific pack's presets and metadata</span></div>
+      <div class="method"><span class="method-sig">policy lint</span><span class="method-desc">Run the SAT/SMT formal policy linter demo</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ AGENT SYSTEM ══════════════════════ -->
+
+<section id="agents">
+  <h2>Agent System</h2>
+  <div class="card card-green">
+    <div class="card-head">
+      <span class="card-name">Agent Loader</span>
+      <span class="tag tag-either">neurosym.agents</span>
+    </div>
+    <p>Loads agent system prompts from <code>.md</code> files on disk. Prompts are cached after first read. Ship custom agents by placing <code>my_agent.md</code> in <code>neurosym/agents/</code> or a custom directory.</p>
+    <pre><span class="kw">from</span> neurosym.agents <span class="kw">import</span> get_agent, list_agents
+
+<span class="fn">list_agents</span>()               <span class="cm"># ['neurosym_dev_agent', 'security_auditor']</span>
+prompt = <span class="fn">get_agent</span>(<span class="st">"neurosym_dev_agent"</span>)   <span class="cm"># str, cached</span></pre>
+    <p>Failures raise typed exceptions (<code>AgentNotFoundError</code>, <code>AgentLoadError</code>) so errors are never silent.</p>
+  </div>
+
+  <div class="card card-amber" style="margin-top:1rem">
+    <div class="card-head">
+      <span class="card-name">ImpactForecaster</span>
+      <span class="tag tag-either">neurosym.agents.impact_forecaster</span>
+    </div>
+    <p>Agent that maps code changes to blast radius: analyzes architecture maps, codeowners, and GitHub diffs to forecast which components a change affects and by how much.</p>
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ══════════════════════ COMPARISON ══════════════════════ -->
+
+<section id="comparison">
+  <h2>vs. Other Guardrail Libraries</h2>
+  <div style="overflow-x:auto">
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>NeMo Guardrails</th>
+        <th>Guardrails AI</th>
+        <th style="color:var(--cyan)">NeuroSym-AI</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="hl"><td>No API keys required</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Voice / input-side injection</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr class="hl"><td>Output-side guards (secret leakage)</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Streaming guard (mid-token abort)</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr class="hl"><td>Multi-turn ConversationGuard</td><td class="no">partial</td><td class="no">✗</td><td class="yes">✓ new</td></tr>
+      <tr><td>Zero-shot NLI IntentClassifier</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ new</td></tr>
+      <tr class="hl"><td>LangChain callback adapter</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ new</td></tr>
+      <tr><td>SAT/SMT formal policy linter</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr class="hl"><td>Composite policy algebra</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      <tr><td>Full structured audit trace</td><td class="no">✗</td><td class="no">partial</td><td class="yes">✓</td></tr>
+      <tr class="hl"><td>Deterministic offline mode</td><td class="no">partial</td><td class="no">partial</td><td class="yes">✓</td></tr>
+      <tr><td>py.typed (mypy/pyright ready)</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+</main>
+</div><!-- /.layout -->
+
+<footer>
+  <span>NeuroSym-AI · MIT © Aadit Pani</span>
+  <span>generated reference · v0.4.3 · 2026-05-24</span>
+</footer>
+
+</div><!-- /.page -->
+</body>
+</html>

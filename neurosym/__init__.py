@@ -29,7 +29,7 @@ from .rules.classifier import IntentClassifierRule
 from .rules.composite import AllOf, AnyOf, Implies, Not
 from .rules.harm import BanTopicsRule
 from .rules.output import SecretLeakageRule, SystemPromptRegurgitationRule
-from .rules.policies import DenyIfContains
+from .rules.policies import DenyIfContains, DenyIfRegex, MaxLengthRule
 from .rules.python_pred_rule import PythonPredicateRule
 from .rules.regex_rule import RegexRule
 from .rules.schema_rule import SchemaRule
@@ -67,6 +67,8 @@ __all__ = [
     "RegexRule",
     "SchemaRule",
     "DenyIfContains",
+    "DenyIfRegex",
+    "MaxLengthRule",
     "PythonPredicateRule",
     # Output guards
     "SecretLeakageRule",

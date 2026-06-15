@@ -203,7 +203,7 @@ def no_path_outside_sandbox(
             if not isinstance(step, dict):
                 continue
             for val in step.get("parameters", {}).values():
-                if isinstance(val, str) and os.sep in val:
+                if isinstance(val, str) and ("/" in val or os.sep in val):
                     if not _is_safe_path(val):
                         return False
         return True

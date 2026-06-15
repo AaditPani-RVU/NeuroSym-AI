@@ -141,13 +141,24 @@ def _make_handler_class(_Base: type) -> type:
 
         @staticmethod
         def _extract_text(response: Any) -> str:
-            """Best-effort extraction of text from a LangChain LLMResult."""
+            """Best-effort extraction of text from a LangChain LLMResult.
+
+            Scans all generations so batched or multi-generation responses are
+            fully covered rather than only the first generation.
+            """
             try:
-                return str(response.generations[0][0].text)
-            except Exception:
-                pass
-            try:
-                return str(response.generations[0][0].message.content)
+                parts: list[str] = []
+                for batch in response.generations:
+                    for gen in batch:
+                        try:
+                            parts.append(str(gen.text))
+                        except Exception:
+                            try:
+                                parts.append(str(gen.message.content))
+                            except Exception:
+                                pass
+                if parts:
+                    return "\n".join(parts)
             except Exception:
                 pass
             return str(response)

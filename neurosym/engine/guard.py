@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import re
 from collections.abc import Generator, Iterable
@@ -417,7 +418,7 @@ class Guard:
 
     async def agenerate(self, prompt: str, **gen_kwargs: Any) -> GuardResult:
         """Async version of generate() — LLM calls run in executor, rules run concurrently."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         trace: list[TraceEntry] = []
         attempt = 1
@@ -603,7 +604,9 @@ class Guard:
         emitted_buffer = ""
         streaming_violations: list[Violation] = []
 
-        stream_rules = [r for r in self.rules if isinstance(r, StreamingRule)]
+        # Deep-copy streaming rules so concurrent stream() calls on the same Guard
+        # don't share mutable buffer state (credential bleed / false positive risk).
+        stream_rules = [copy.deepcopy(r) for r in self.rules if isinstance(r, StreamingRule)]
         batch_rules = [r for r in self.rules if not isinstance(r, StreamingRule)]
 
         for r in stream_rules:

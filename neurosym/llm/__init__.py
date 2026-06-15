@@ -1,6 +1,10 @@
 from .base import LLM
 from .fallback import FallbackLLM
-from .ollama import OllamaLLM
+
+try:
+    from .ollama import OllamaLLM
+except ImportError:
+    OllamaLLM = None  # type: ignore[assignment,misc]
 
 try:
     from .gemini import GeminiLLM
